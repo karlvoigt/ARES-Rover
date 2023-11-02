@@ -46,6 +46,7 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* Definitions for defaultTask */
@@ -89,9 +90,10 @@ const osMessageQueueAttr_t uart2Queue_attributes = {
 /* USER CODE BEGIN PV */
 #define UART_BUFFER_SIZE 128  // Adjust the size as needed
 
-uint8_t uart_buffer[1];
-uint8_t uart_accumulate_buffer[UART_BUFFER_SIZE];
-uint16_t uart_accumulate_pos = 0;
+uint8_t uart1_buffer[1], uart2_buffer[1];
+uint8_t uart1_accumulate_buffer[UART_BUFFER_SIZE],uart2_accumulate_buffer[UART_BUFFER_SIZE];;
+uint8_t uart1_accumulate_pos = 0;
+uint8_t uart2_accumulate_pos = 0;
 uint16_t light_ch0, light_ch1;
 uint8_t receivedData[100]; // Adjust size as needed
 const uint8_t verbose=0;
@@ -103,6 +105,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_USART1_UART_Init(void);
 void StartDefaultTask(void *argument);
 void UART2_Task(void *argument);
 void UART1_Task(void *argument);
@@ -157,8 +160,10 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart2, uart_buffer, 1);
+  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
 
   /* USER CODE END 2 */
@@ -328,6 +333,41 @@ static void MX_I2C1_Init(void)
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 19200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -396,19 +436,17 @@ static void MX_GPIO_Init(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 
-//	if (huart->Instance == USART1)
-//	{
-////		xQueueSendFromISR(uart1Queue, uart_buffer, NULL);
-//		printf("Received1\n");
-//		HAL_UART_Receive_IT(&huart1, uart_buffer, sizeof(uart_buffer));
-//	}
-//	else
-		if (huart->Instance == USART2)
+	if (huart->Instance == USART1)
 	{
-		xQueueSendFromISR(uart2QueueHandle, uart_buffer, NULL);
+		xQueueSendFromISR(uart1QueueHandle, uart1_buffer, NULL);
+		HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+	}
+	else if (huart->Instance == USART2)
+	{
+		xQueueSendFromISR(uart2QueueHandle, uart2_buffer, NULL);
 
 		// Prepare to receive the next character
-		HAL_UART_Receive_IT(&huart2, uart_buffer, 1);
+		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
 
 	}
 }
@@ -454,22 +492,23 @@ void UART2_Task(void *argument)
 	      if (receivedChar == '\n' || receivedChar == '\r')
 	      {
 	        // Null-terminate the string
-	        uart_accumulate_buffer[uart_accumulate_pos] = '\0';
+	        uart2_accumulate_buffer[uart2_accumulate_pos] = '\0';
 
 	        // Process the complete message here
-	        printf("%s\n", uart_accumulate_buffer);
+//	        printf("%s\n", uart2_accumulate_buffer);
+	        HAL_UART_Transmit(&huart1, uart2_accumulate_buffer,UART_BUFFER_SIZE , HAL_MAX_DELAY);
 
 	        // Reset the accumulate buffer position
-	        uart_accumulate_pos = 0;
+	        uart2_accumulate_pos = 0;
 	      } else {
 		      // Accumulate the received characters
-		      uart_accumulate_buffer[uart_accumulate_pos++] = receivedChar;
+		      uart2_accumulate_buffer[uart2_accumulate_pos++] = receivedChar;
 	      }
 
 	      // Make sure we don't overflow the buffer
-	      if (uart_accumulate_pos >= UART_BUFFER_SIZE)
+	      if (uart2_accumulate_pos >= UART_BUFFER_SIZE)
 	      {
-	        uart_accumulate_pos = 0;
+	        uart2_accumulate_pos = 0;
 	      }
 	    }
 	  }
@@ -486,11 +525,36 @@ void UART2_Task(void *argument)
 void UART1_Task(void *argument)
 {
   /* USER CODE BEGIN UART1_Task */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+	char receivedChar;
+	/* Infinite loop */
+	for(;;)
+	{
+		if (xQueueReceive(uart1QueueHandle, &receivedChar, portMAX_DELAY) == pdPASS)
+		{
+
+		  // Check if the end of transmission is reached
+		  if ( receivedChar == '\r')
+		  {
+			// Null-terminate the string
+			uart1_accumulate_buffer[uart1_accumulate_pos] = '\0';
+
+			// Process the complete message here
+			printf("%s\r", uart1_accumulate_buffer);
+
+			// Reset the accumulate buffer position
+			uart1_accumulate_pos = 0;
+		  } else {
+			  // Accumulate the received characters
+			  uart1_accumulate_buffer[uart1_accumulate_pos++] = receivedChar;
+		  }
+
+		  // Make sure we don't overflow the buffer
+		  if (uart1_accumulate_pos >= UART_BUFFER_SIZE)
+		  {
+			uart1_accumulate_pos = 0;
+		  }
+		}
+	}
   /* USER CODE END UART1_Task */
 }
 
