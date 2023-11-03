@@ -1,3 +1,4 @@
+"./Core/Src/CustomProtocol.o"
 "./Core/Src/LTR329.o"
 "./Core/Src/freertos.o"
 "./Core/Src/main.o"

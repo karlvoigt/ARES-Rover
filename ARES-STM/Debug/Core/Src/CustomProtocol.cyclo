@@ -1,0 +1,2 @@
+../Core/Src/CustomProtocol.c:16:6:sendMessage	1
+../Core/Src/CustomProtocol.c:28:6:sendLightSensorData	1

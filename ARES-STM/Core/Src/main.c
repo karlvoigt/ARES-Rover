@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "queue.h"
 #include "LTR329.h"
+#include "CustomProtocol.h"
 
 /* USER CODE END Includes */
 
@@ -96,7 +97,7 @@ uint8_t uart1_accumulate_pos = 0;
 uint8_t uart2_accumulate_pos = 0;
 uint16_t light_ch0, light_ch1;
 uint8_t receivedData[100]; // Adjust size as needed
-const uint8_t verbose=0;
+const uint8_t verbose=1;
 
 /* USER CODE END PV */
 
@@ -574,8 +575,9 @@ void LightSensorTask(void *argument)
 	  {
 		// Read light data
 		LTR329_Read_Light(&light_ch0, &light_ch1);
-		if (verbose) printf("Light Ch0: %d \n Light Ch1: %d\n________\n\n",light_ch0,light_ch1);
-		osDelay(1000);
+//		if (verbose) printf("Light Ch0: %d \n Light Ch1: %d\n________\n\n",light_ch0,light_ch1);
+		sendLightSensorData(light_ch0);
+		osDelay(2000);
 	  }
 	  // In case we accidentally exit from task loop
 	osThreadTerminate(NULL);
