@@ -1,0 +1,3 @@
+[submodule "stack/modules/lorawan"]
+	path = stack/modules/lorawan
+	url = ../loramac-node.git
