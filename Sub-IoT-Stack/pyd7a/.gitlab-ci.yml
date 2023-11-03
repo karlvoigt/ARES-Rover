@@ -1,0 +1,18 @@
+image: python:3.8
+
+stages:
+  - test
+
+unit-test:
+  stage: test
+  script:
+    - python3 -m pip install pytest
+    - python3 -m pip install -r requirements.txt
+    - cd test
+    - PYTHONPATH="../" pytest --junitxml=../unittest-result.xml
+  artifacts:
+    when: always
+    paths:
+      - unittest-result.xml
+    reports:
+      junit: unittest-result.xml
