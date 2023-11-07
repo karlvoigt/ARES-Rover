@@ -55,7 +55,7 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityRealtime,
 };
 /* Definitions for UART2Task */
 osThreadId_t UART2TaskHandle;
@@ -163,9 +163,6 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
-  printf("Setup complete\n");
 
   /* USER CODE END 2 */
 
@@ -464,10 +461,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
+  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+  printf("Setup complete\n");
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    osDelay(10000);
   }
   /* USER CODE END 5 */
 }
