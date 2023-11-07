@@ -8,6 +8,7 @@
 #ifndef SRC_GLOBALDEFS_H_
 #define SRC_GLOBALDEFS_H_
 
-
+#define debug 1
+const uint8_t verbose=1;
 
 #endif /* SRC_GLOBALDEFS_H_ */

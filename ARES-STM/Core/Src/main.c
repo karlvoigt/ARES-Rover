@@ -108,7 +108,6 @@ uint8_t uart1_accumulate_pos = 0;
 uint8_t uart2_accumulate_pos = 0;
 uint16_t light_ch0, light_ch1;
 uint8_t receivedData[100]; // Adjust size as needed
-const uint8_t verbose=1;
 
 /* USER CODE END PV */
 
@@ -591,8 +590,10 @@ void LightSensorTask(void *argument)
 	  {
 		// Read light data
 		LTR329_Read_Light(&light_ch0, &light_ch1);
-//		if (verbose) printf("Light Ch0: %d \n Light Ch1: %d\n________\n\n",light_ch0,light_ch1);
-		sendLightSensorData(light_ch0);
+		if (verbose) {
+			printf("Light Ch0: %d \n Light Ch1: %d\n________\n",light_ch0,light_ch1);
+		}
+		else sendLightSensorData(light_ch0);
 		osDelay(2000);
 	  }
 	  // In case we accidentally exit from task loop
@@ -618,17 +619,19 @@ void TempTask(void *argument)
 
 	  // Read temperature and humidity from the SHT40 sensor
 	  SHT40_Read_Temp_Hum(&rawTemperature, &rawHumidity);
-	  // Scale and convert the raw temperature to an integer
-	  int temp_scaled = (-45 * TEMPERATURE_SCALE_FACTOR) +
-					   (175 * TEMPERATURE_SCALE_FACTOR * rawTemperature) / RAW_VALUE_MAX;
+	  if (verbose) {
+		  // Scale and convert the raw temperature to an integer
+		  int temp_scaled = (-45 * TEMPERATURE_SCALE_FACTOR) +
+						   (175 * TEMPERATURE_SCALE_FACTOR * rawTemperature) / RAW_VALUE_MAX;
 
-	  // Scale and convert the raw humidity to an integer
-	  int hum_scaled = (100 * TEMPERATURE_SCALE_FACTOR * rawHumidity) / RAW_VALUE_MAX;
+		  // Scale and convert the raw humidity to an integer
+		  int hum_scaled = (100 * TEMPERATURE_SCALE_FACTOR * rawHumidity) / RAW_VALUE_MAX;
 
-	  // Print the scaled temperature and humidity as integers
-	  printf("Temperature: %d.%03dC, Humidity: %d.%03d%%RH\n",
-			 temp_scaled / TEMPERATURE_SCALE_FACTOR, abs(temp_scaled % TEMPERATURE_SCALE_FACTOR),
-			 hum_scaled / TEMPERATURE_SCALE_FACTOR, hum_scaled % TEMPERATURE_SCALE_FACTOR);
+		  // Print the scaled temperature and humidity as integers
+		  printf("Temperature: %d.%03dC, Humidity: %d.%03d%%RH\n________\n",
+				 temp_scaled / TEMPERATURE_SCALE_FACTOR, abs(temp_scaled % TEMPERATURE_SCALE_FACTOR),
+				 hum_scaled / TEMPERATURE_SCALE_FACTOR, hum_scaled % TEMPERATURE_SCALE_FACTOR);
+	  }
 
 	  // Delay for a while before reading again
 	  osDelay(pdMS_TO_TICKS(1000));  // 1 second delay

@@ -9,7 +9,7 @@
 ../Core/Src/main.c:477:6:StartDefaultTask	1
 ../Core/Src/main.c:498:6:UART2_Task	5
 ../Core/Src/main.c:542:6:UART1_Task	4
-../Core/Src/main.c:585:6:LightSensorTask	1
-../Core/Src/main.c:609:6:TempTask	1
-../Core/Src/main.c:647:6:HAL_TIM_PeriodElapsedCallback	2
-../Core/Src/main.c:664:6:Error_Handler	1
+../Core/Src/main.c:585:6:LightSensorTask	2
+../Core/Src/main.c:611:6:TempTask	2
+../Core/Src/main.c:651:6:HAL_TIM_PeriodElapsedCallback	2
+../Core/Src/main.c:668:6:Error_Handler	1
