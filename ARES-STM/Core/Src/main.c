@@ -25,7 +25,11 @@
 #include <stdio.h>
 #include "queue.h"
 #include "LTR329.h"
+#include "SHT40.h"
 #include "CustomProtocol.h"
+#include "globalDefs.h"
+#include <math.h>
+#include <stdlib.h>
 
 /* USER CODE END Includes */
 
@@ -78,6 +82,13 @@ const osThreadAttr_t LightSensor_Tas_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal1,
 };
+/* Definitions for Temp_Task */
+osThreadId_t Temp_TaskHandle;
+const osThreadAttr_t Temp_Task_attributes = {
+  .name = "Temp_Task",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
 /* Definitions for uart1Queue */
 osMessageQueueId_t uart1QueueHandle;
 const osMessageQueueAttr_t uart1Queue_attributes = {
@@ -111,6 +122,7 @@ void StartDefaultTask(void *argument);
 void UART2_Task(void *argument);
 void UART1_Task(void *argument);
 void LightSensorTask(void *argument);
+void TempTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -163,6 +175,8 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  LTR329_Init();
+  SHT40_Init();
 
   /* USER CODE END 2 */
 
@@ -204,6 +218,9 @@ int main(void)
 
   /* creation of LightSensor_Tas */
   LightSensor_TasHandle = osThreadNew(LightSensorTask, NULL, &LightSensor_Tas_attributes);
+
+  /* creation of Temp_Task */
+  Temp_TaskHandle = osThreadNew(TempTask, NULL, &Temp_Task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -569,7 +586,6 @@ void UART1_Task(void *argument)
 void LightSensorTask(void *argument)
 {
   /* USER CODE BEGIN LightSensorTask */
-	LTR329_Init();
 	/* Infinite loop */
 	  for(;;)
 	  {
@@ -582,6 +598,43 @@ void LightSensorTask(void *argument)
 	  // In case we accidentally exit from task loop
 	osThreadTerminate(NULL);
   /* USER CODE END LightSensorTask */
+}
+
+/* USER CODE BEGIN Header_TempTask */
+/**
+* @brief Function implementing the Temp_Task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_TempTask */
+void TempTask(void *argument)
+{
+  /* USER CODE BEGIN TempTask */
+  /* Infinite loop */
+  for(;;)
+  {
+	  uint16_t rawTemperature = 404;
+	  uint16_t rawHumidity = 404;
+
+	  // Read temperature and humidity from the SHT40 sensor
+	  SHT40_Read_Temp_Hum(&rawTemperature, &rawHumidity);
+	  // Scale and convert the raw temperature to an integer
+	  int temp_scaled = (-45 * TEMPERATURE_SCALE_FACTOR) +
+					   (175 * TEMPERATURE_SCALE_FACTOR * rawTemperature) / RAW_VALUE_MAX;
+
+	  // Scale and convert the raw humidity to an integer
+	  int hum_scaled = (100 * TEMPERATURE_SCALE_FACTOR * rawHumidity) / RAW_VALUE_MAX;
+
+	  // Print the scaled temperature and humidity as integers
+	  printf("Temperature: %d.%03dC, Humidity: %d.%03d%%RH\n",
+			 temp_scaled / TEMPERATURE_SCALE_FACTOR, abs(temp_scaled % TEMPERATURE_SCALE_FACTOR),
+			 hum_scaled / TEMPERATURE_SCALE_FACTOR, hum_scaled % TEMPERATURE_SCALE_FACTOR);
+
+	  // Delay for a while before reading again
+	  osDelay(pdMS_TO_TICKS(1000));  // 1 second delay
+
+  }
+  /* USER CODE END TempTask */
 }
 
 /**

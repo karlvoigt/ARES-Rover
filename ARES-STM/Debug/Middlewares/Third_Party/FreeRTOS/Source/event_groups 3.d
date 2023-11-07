@@ -1,5 +1,5 @@
-Middlewares/Third_Party/FreeRTOS/Source/event_groups.o: \
- ../Middlewares/Third_Party/FreeRTOS/Source/event_groups.c \
+Middlewares/Third_Party/FreeRTOS/Source/event_groups 3.o: \
+ ../Middlewares/Third_Party/FreeRTOS/Source/event_groups\ 3.c \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../Core/Inc/FreeRTOSConfig.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h \

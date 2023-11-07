@@ -1,2 +1,2 @@
 ../Core/Src/CustomProtocol.c:16:6:sendMessage	32	static
-../Core/Src/CustomProtocol.c:28:6:sendLightSensorData	24	static
+../Core/Src/CustomProtocol.c:27:6:sendLightSensorData	24	static
