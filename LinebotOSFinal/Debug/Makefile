@@ -54,6 +54,7 @@ C_SRCS +=  \
 ../Drivers/DriverTWIMaster.c \
 ../Drivers/DriverUSART.c \
 ../Drivers/DriverVL53L0x.c \
+../Drivers/PowerManagement.c \
 ../FreeRTOS/heap_2.c \
 ../FreeRTOS/list.c \
 ../FreeRTOS/port.c \
@@ -98,6 +99,7 @@ Drivers/DriverSysClk.o \
 Drivers/DriverTWIMaster.o \
 Drivers/DriverUSART.o \
 Drivers/DriverVL53L0x.o \
+Drivers/PowerManagement.o \
 FreeRTOS/heap_2.o \
 FreeRTOS/list.o \
 FreeRTOS/port.o \
@@ -135,6 +137,7 @@ Drivers/DriverSysClk.o \
 Drivers/DriverTWIMaster.o \
 Drivers/DriverUSART.o \
 Drivers/DriverVL53L0x.o \
+Drivers/PowerManagement.o \
 FreeRTOS/heap_2.o \
 FreeRTOS/list.o \
 FreeRTOS/port.o \
@@ -172,6 +175,7 @@ Drivers/DriverSysClk.d \
 Drivers/DriverTWIMaster.d \
 Drivers/DriverUSART.d \
 Drivers/DriverVL53L0x.d \
+Drivers/PowerManagement.d \
 FreeRTOS/heap_2.d \
 FreeRTOS/list.d \
 FreeRTOS/port.d \
@@ -209,6 +213,7 @@ Drivers/DriverSysClk.d \
 Drivers/DriverTWIMaster.d \
 Drivers/DriverUSART.d \
 Drivers/DriverVL53L0x.d \
+Drivers/PowerManagement.d \
 FreeRTOS/heap_2.d \
 FreeRTOS/list.d \
 FreeRTOS/port.d \
@@ -337,6 +342,13 @@ Drivers/DriverUSART.o: ../Drivers/DriverUSART.c
 	
 
 Drivers/DriverVL53L0x.o: ../Drivers/DriverVL53L0x.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+Drivers/PowerManagement.o: ../Drivers/PowerManagement.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

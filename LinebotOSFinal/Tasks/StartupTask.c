@@ -72,7 +72,7 @@ static void WorkerStartup(void *pvParameters)
 	InitLineFollowerSpeedTask();
 	InitLineFollowerDirectTask();
 	InitRGBTask();
-	InitGyroTask();
+	//InitGyroTask();
 	InitTerminalTask();
 	InitMotionTask();
 	

@@ -66,6 +66,7 @@ void vAssertCalled( char *File, int Line);
 #define configUSE_MUTEXES 1
 #define configUSE_APPLICATION_TASK_TAG 1
 #define configAPPLICATION_ALLOCATED_HEAP 1
+#define configUSE_TICKLESS_IDLE 1
 
 #define portLU_PRINTF_SPECIFIER_REQUIRED 1
 

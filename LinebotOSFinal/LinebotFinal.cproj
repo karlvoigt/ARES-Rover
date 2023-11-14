@@ -42,7 +42,7 @@
     </AsfFrameworkConfig>
     <avrtool>com.atmel.avrdbg.tool.atmelice</avrtool>
     <avrtoolinterface>PDI</avrtoolinterface>
-    <avrtoolserialnumber>J42700036719</avrtoolserialnumber>
+    <avrtoolserialnumber>J42700010044</avrtoolserialnumber>
     <avrdeviceexpectedsignature>0x1E9845</avrdeviceexpectedsignature>
     <com_atmel_avrdbg_tool_avrdragon>
       <ToolOptions>
@@ -58,7 +58,8 @@
       <ToolOptions>
         <InterfaceProperties>
         </InterfaceProperties>
-        <InterfaceName>PDI</InterfaceName>
+        <InterfaceName>
+        </InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.simulator</ToolType>
       <ToolNumber>
@@ -73,7 +74,7 @@
         <InterfaceName>PDI</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.atmelice</ToolType>
-      <ToolNumber>J42700036719</ToolNumber>
+      <ToolNumber>J42700010044</ToolNumber>
       <ToolName>Atmel-ICE</ToolName>
     </com_atmel_avrdbg_tool_atmelice>
     <avrtoolinterfaceclock>4000000</avrtoolinterfaceclock>
@@ -279,6 +280,12 @@
     <Compile Include="Drivers\DriverVL53L0X.h">
       <SubType>compile</SubType>
       <Link>Drivers\DriverVL53L0X.h</Link>
+    </Compile>
+    <Compile Include="Drivers\PowerManagement.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Drivers\PowerManagement.h">
+      <SubType>compile</SubType>
     </Compile>
     <Compile Include="FreeRTOSConfig.h">
       <SubType>compile</SubType>
