@@ -64,8 +64,8 @@ all: main-build
 main-build: ARES-STM.elf secondary-outputs
 
 # Tool invocations
-ARES-STM.elf ARES-STM.map: $(OBJS) $(USER_OBJS) /Users/karlvoigt/Documents/Uni/IOT/ARES-Rover/ARES-STM/STM32L412KBUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "ARES-STM.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/karlvoigt/Documents/Uni/IOT/ARES-Rover/ARES-STM/STM32L412KBUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ARES-STM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+ARES-STM.elf ARES-STM.map: $(OBJS) $(USER_OBJS) /Users/karlvoigt/Documents/Uni/IOT.nosync/ARES-Rover/ARES-STM/STM32L412KBUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "ARES-STM.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/Users/karlvoigt/Documents/Uni/IOT.nosync/ARES-Rover/ARES-STM/STM32L412KBUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ARES-STM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

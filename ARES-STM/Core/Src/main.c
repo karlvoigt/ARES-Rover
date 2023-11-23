@@ -49,6 +49,7 @@ I2C_HandleTypeDef hi2c1;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -99,11 +100,44 @@ uint16_t light_ch0, light_ch1;
 uint8_t receivedData[100]; // Adjust size as needed
 const uint8_t verbose=1;
 
+typedef enum {
+    WAIT_FOR_START_DELIMITER,
+    WAIT_FOR_DATA_LENGTH_HIGH,
+    WAIT_FOR_DATA_LENGTH_LOW,
+    WAIT_FOR_DATA
+} ReceiveState;
+
+typedef enum {
+    WAIT_FOR_GYRO_X_HIGH,
+    WAIT_FOR_GYRO_X_LOW,
+    WAIT_FOR_GYRO_Y_HIGH,
+    WAIT_FOR_GYRO_Y_LOW,
+    WAIT_FOR_GYRO_Z_HIGH,
+    WAIT_FOR_GYRO_Z_LOW,
+    WAIT_FOR_ACCEL_X_HIGH,
+    WAIT_FOR_ACCEL_X_LOW,
+    WAIT_FOR_ACCEL_Y_HIGH,
+    WAIT_FOR_ACCEL_Y_LOW,
+    WAIT_FOR_ACCEL_Z_HIGH,
+    WAIT_FOR_ACCEL_Z_LOW
+} MEMS_Data_State;
+
+ReceiveState UART1receiveState = WAIT_FOR_START_DELIMITER;
+uint16_t dataLength = 0;
+uint8_t dataReceived = 0;
+uint8_t* dma_buffer = NULL;
+int16_t curX = 0;
+int16_t curY = 0;
+int16_t targetX = 0;
+int16_t targetY = 0;
+SensorMeasurements targetMeasurements;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART1_UART_Init(void);
@@ -159,6 +193,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   MX_USART1_UART_Init();
@@ -189,7 +224,7 @@ int main(void)
   uart1QueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &uart1Queue_attributes);
 
   /* creation of uart2Queue */
-  uart2QueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &uart2Queue_attributes);
+  uart2QueueHandle = osMessageQueueNew (2, sizeof(Dash7ToSTM32Message), &uart2Queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -404,6 +439,22 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -436,20 +487,74 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+  if (huart->Instance == USART1)
+    {
+        switch (UART1receiveState) {
+            case WAIT_FOR_START_DELIMITER:
+                if (uart1_buffer[0] == START_DELIMITER) {
+                    UART1receiveState = WAIT_FOR_DATA_LENGTH_HIGH;
+                }
+                HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+                break;
 
-	if (huart->Instance == USART1)
-	{
-		xQueueSendFromISR(uart1QueueHandle, uart1_buffer, NULL);
-		HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
-	}
+            case WAIT_FOR_DATA_LENGTH_HIGH:
+                dataLength = uart1_buffer[0] << 8;
+                UART1receiveState = WAIT_FOR_DATA_LENGTH_LOW;
+                HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+                break;
+
+            case WAIT_FOR_DATA_LENGTH_LOW:
+                dataLength |= uart1_buffer[0];
+                UART1receiveState = WAIT_FOR_DATA;
+                dma_buffer = (uint8_t*)pvPortMalloc((dataLength*12 + 1) * sizeof(uint8_t)); // Allocate buffer for DMA transfer
+                HAL_UART_Receive_DMA(&huart1, dma_buffer, dataLength*12 + 1);
+                break;
+
+            case WAIT_FOR_DATA:
+                // DMA transfer is complete
+                HAL_UART_DMAStop(&huart1); // Stop the DMA transfer
+
+                // Check if the last byte is the end delimiter
+                if (dma_buffer[dataLength*12] == END_DELIMITER) {
+                    // Process the received data here
+                    // You can send the data to a FreeRTOS task using a queue
+                    xQueueSendFromISR(uart1QueueHandle, dma_buffer, NULL);
+                }
+
+                // Free the DMA buffer
+                vPortFree(dma_buffer);
+                dma_buffer = NULL;
+
+                // Restart the interrupt-based reception
+                UART1receiveState = WAIT_FOR_START_DELIMITER;
+                HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+                break;
+        }
+    }
+	// if (huart->Instance == USART1)
+	// {
+	// 	xQueueSendFromISR(uart1QueueHandle, uart1_buffer, NULL);
+	// 	HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+	// }
 	else if (huart->Instance == USART2)
 	{
+		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
 		xQueueSendFromISR(uart2QueueHandle, uart2_buffer, NULL);
 
 		// Prepare to receive the next character
-		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+//		HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
 
 	}
+}
+
+
+void printSensorMeasurements(SensorMeasurements measurements) {
+    const char* measurementStrings[] = {"No", "Yes", "Optional"};
+
+    printf("Temperature: %s\n", measurementStrings[measurements.temperature]);
+    printf("Humidity: %s\n", measurementStrings[measurements.humidity]);
+    printf("Visible Light: %s\n", measurementStrings[measurements.visibleLight]);
+    printf("Infrared: %s\n", measurementStrings[measurements.infrared]);
 }
 
 /* USER CODE END 4 */
@@ -464,6 +569,13 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
+<<<<<<< Updated upstream
+=======
+   HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+//  HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
+  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+  printf("Setup complete\n");
+>>>>>>> Stashed changes
   /* Infinite loop */
   for(;;)
   {
@@ -482,37 +594,26 @@ void StartDefaultTask(void *argument)
 void UART2_Task(void *argument)
 {
   /* USER CODE BEGIN UART2_Task */
-	char receivedChar;
-	  /* Infinite loop */
-	  for(;;)
-	  {
-	    if (xQueueReceive(uart2QueueHandle, &receivedChar, portMAX_DELAY) == pdPASS)
-	    {
-
-	      // Check if the end of transmission is reached
-	      if (receivedChar == '\n' || receivedChar == '\r')
-	      {
-	        // Null-terminate the string
-	        uart2_accumulate_buffer[uart2_accumulate_pos] = '\0';
-
-	        // Process the complete message here
-//	        printf("%s\n", uart2_accumulate_buffer);
-	        HAL_UART_Transmit(&huart1, uart2_accumulate_buffer,UART_BUFFER_SIZE , HAL_MAX_DELAY);
-
-	        // Reset the accumulate buffer position
-	        uart2_accumulate_pos = 0;
-	      } else {
-		      // Accumulate the received characters
-		      uart2_accumulate_buffer[uart2_accumulate_pos++] = receivedChar;
-	      }
-
-	      // Make sure we don't overflow the buffer
-	      if (uart2_accumulate_pos >= UART_BUFFER_SIZE)
-	      {
-	        uart2_accumulate_pos = 0;
-	      }
-	    }
-	  }
+	Dash7ToSTM32Message receivedMessage;
+  /* Infinite loop */
+  for(;;)
+  {
+    if (xQueueReceive(uart2QueueHandle, &receivedMessage, portMAX_DELAY) == pdPASS)
+    {
+      //Check for message structure
+      if (receivedMessage.startDelimiter != START_DELIMITER || receivedMessage.endDelimiter != END_DELIMITER)
+      {
+        // Invalid message structure
+        continue;
+      } else {
+        targetX = receivedMessage.xCoord;
+        targetY = receivedMessage.yCoord;
+        targetMeasurements = *(SensorMeasurements*)&receivedMessage.sensorControl;
+        printSensorMeasurements(targetMeasurements);
+        printf("Received message with x: %d, y: %d\n", targetX, targetY);
+      }
+    }
+  }
   /* USER CODE END UART2_Task */
 }
 
@@ -526,36 +627,11 @@ void UART2_Task(void *argument)
 void UART1_Task(void *argument)
 {
   /* USER CODE BEGIN UART1_Task */
-	char receivedChar;
-	/* Infinite loop */
-	for(;;)
-	{
-		if (xQueueReceive(uart1QueueHandle, &receivedChar, portMAX_DELAY) == pdPASS)
-		{
-
-		  // Check if the end of transmission is reached
-		  if ( receivedChar == '\r')
-		  {
-			// Null-terminate the string
-			uart1_accumulate_buffer[uart1_accumulate_pos] = '\0';
-
-			// Process the complete message here
-			printf("%s\r", uart1_accumulate_buffer);
-
-			// Reset the accumulate buffer position
-			uart1_accumulate_pos = 0;
-		  } else {
-			  // Accumulate the received characters
-			  uart1_accumulate_buffer[uart1_accumulate_pos++] = receivedChar;
-		  }
-
-		  // Make sure we don't overflow the buffer
-		  if (uart1_accumulate_pos >= UART_BUFFER_SIZE)
-		  {
-			uart1_accumulate_pos = 0;
-		  }
-		}
-	}
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
   /* USER CODE END UART1_Task */
 }
 

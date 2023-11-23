@@ -70,6 +70,19 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
+typedef enum {
+    MEASURE_NO = 0b10,
+    MEASURE_YES = 0b01,
+    MEASURE_OPTIONAL = 0b11
+} MeasureState;
+
+typedef struct __attribute__((packed)) {
+    MeasureState temperature : 2;
+    MeasureState humidity : 2;
+    MeasureState visibleLight : 2;
+    MeasureState infrared : 2;
+} SensorMeasurements;
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

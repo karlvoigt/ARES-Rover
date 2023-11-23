@@ -1,2 +1,8 @@
+<<<<<<< Updated upstream
 ../Core/Src/CustomProtocol.c:16:6:sendMessage	1
 ../Core/Src/CustomProtocol.c:28:6:sendLightSensorData	1
+=======
+../Core/Src/CustomProtocol.c:18:7:sendMessage	1
+../Core/Src/CustomProtocol.c:29:7:sendLightSensorData	1
+../Core/Src/CustomProtocol.c:68:6:parseUARTMessage	6
+>>>>>>> Stashed changes
