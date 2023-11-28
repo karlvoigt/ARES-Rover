@@ -639,7 +639,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
 		xQueueSendFromISR(uart2QueueHandle, uart2_buffer, NULL);
-=======
 //		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
       newInstruction.startDelimiter = uart2_buffer[11];
 
@@ -651,7 +650,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 //		xQueueSendFromISR(uart2QueueHandle, &msg, NULL);
 
 		xTaskResumeFromISR(navigationTaskHandle);
->>>>>>> Stashed changes
 
 		// Prepare to receive the next character
 //		HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
@@ -779,8 +777,6 @@ void LightSensorTask(void *argument)
   /* USER CODE END LightSensorTask */
 }
 
-<<<<<<< Updated upstream
-=======
 /* USER CODE BEGIN Header_TempTask */
 /**
 * @brief Function implementing the Temp_Task thread.
@@ -828,7 +824,6 @@ void StartNavigationTask(void *argument)
   /* USER CODE END StartNavigationTask */
 }
 
->>>>>>> Stashed changes
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM6 interrupt took place, inside
