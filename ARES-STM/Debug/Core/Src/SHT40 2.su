@@ -1,2 +1,0 @@
-../Core/Src/SHT40 2.c:20:6:SHT40_Init	4	static
-../Core/Src/SHT40 2.c:26:6:SHT40_Read_Temp_Hum	40	static

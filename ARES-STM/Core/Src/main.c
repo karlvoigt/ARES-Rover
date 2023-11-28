@@ -58,7 +58,7 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityRealtime,
 };
 /* Definitions for UART2Task */
 osThreadId_t UART2TaskHandle;
@@ -80,6 +80,20 @@ const osThreadAttr_t LightSensor_Tas_attributes = {
   .name = "LightSensor_Tas",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal1,
+};
+/* Definitions for Temp_Task */
+osThreadId_t Temp_TaskHandle;
+const osThreadAttr_t Temp_Task_attributes = {
+  .name = "Temp_Task",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
+/* Definitions for NavigationTask */
+osThreadId_t NavigationTaskHandle;
+const osThreadAttr_t NavigationTask_attributes = {
+  .name = "NavigationTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal2,
 };
 /* Definitions for uart1Queue */
 osMessageQueueId_t uart1QueueHandle;
@@ -113,6 +127,7 @@ float targetY = 0;
 float targetAngle = 0;
 float plannedAngle = 0;
 SensorMeasurements targetMeasurements;
+Dash7ToSTM32Message newInstruction;
 
 /* USER CODE END PV */
 
@@ -127,6 +142,8 @@ void StartDefaultTask(void *argument);
 void UART2_Task(void *argument);
 void UART1_Task(void *argument);
 void LightSensorTask(void *argument);
+void TempTask(void *argument);
+void StartNavigationTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -201,7 +218,7 @@ void transmitInstructions(navigationInstruction* instructions, uint8_t instructi
         memcpy(&transmission[3 + i*sizeof(navigationInstruction)], &instructions[i].instructionValue, 4);
     }
     transmission[instructionCnt*sizeof(navigationInstruction) + 2] = END_DELIMITER;
-    // HAL_UART_Transmit(&huart2, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
+     HAL_UART_Transmit(&huart2, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
     receiveInstructions(transmission, instructionCnt*sizeof(navigationInstruction) + 3);
 }
 
@@ -341,6 +358,12 @@ int main(void)
 
   /* creation of LightSensor_Tas */
   LightSensor_TasHandle = osThreadNew(LightSensorTask, NULL, &LightSensor_Tas_attributes);
+
+  /* creation of Temp_Task */
+  Temp_TaskHandle = osThreadNew(TempTask, NULL, &Temp_Task_attributes);
+
+  /* creation of NavigationTask */
+  NavigationTaskHandle = osThreadNew(StartNavigationTask, NULL, &NavigationTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -648,7 +671,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
       newInstruction.endDelimiter = uart2_buffer[9];
 //		xQueueSendFromISR(uart2QueueHandle, &msg, NULL);
 
-		  xTaskResumeFromISR(navigationTaskHandle);
+		  xTaskResumeFromISR(NavigationTaskHandle);
 
       // Prepare to receive the next character
       HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
@@ -700,27 +723,28 @@ void StartDefaultTask(void *argument)
 void UART2_Task(void *argument)
 {
   /* USER CODE BEGIN UART2_Task */
-	uint8_t data[sizeof(Dash7ToSTM32Message)];
-	Dash7ToSTM32Message msg;
-	MessageUnion receivedMessage;
+//	uint8_t data[sizeof(Dash7ToSTM32Message)];
+//	Dash7ToSTM32Message msg;
+//	MessageUnion receivedMessage;
   /* Infinite loop */
   for(;;)
   {
-    if (xQueueReceive(uart2QueueHandle, &receivedMessage, portMAX_DELAY) == pdPASS)
-    {
-      //Check for message structure
-      if (receivedMessage.startDelimiter != START_DELIMITER || receivedMessage.endDelimiter != END_DELIMITER)
-      {
-        // Invalid message structure
-        continue;
-      } else {
-        targetX = receivedMessage.xCoord;
-        targetY = receivedMessage.yCoord;
-        targetMeasurements = *(SensorMeasurements*)&receivedMessage.sensorControl;
-        printSensorMeasurements(targetMeasurements);
-        printf("Received message with x: %f, y: %f\n", targetX, targetY);
-      }
-    }
+//    if (xQueueReceive(uart2QueueHandle, &receivedMessage, portMAX_DELAY) == pdPASS)
+//    {
+//      //Check for message structure
+//      if (receivedMessage.startDelimiter != START_DELIMITER || receivedMessage.endDelimiter != END_DELIMITER)
+//      {
+//        // Invalid message structure
+//        continue;
+//      } else {
+//        targetX = receivedMessage.xCoord;
+//        targetY = receivedMessage.yCoord;
+//        targetMeasurements = *(SensorMeasurements*)&receivedMessage.sensorControl;
+//        printSensorMeasurements(targetMeasurements);
+//        printf("Received message with x: %f, y: %f\n", targetX, targetY);
+//      }
+//    }
+	  osDelay(10000);
   }
   /* USER CODE END UART2_Task */
 }
@@ -804,12 +828,12 @@ void StartNavigationTask(void *argument)
 		  targetX = newInstruction.xCoord;
 		  targetY = newInstruction.yCoord;
 		  targetMeasurements = *(SensorMeasurements*)&newInstruction.sensorControl;
-      printf("Received message with x: %f, y: %f\n", targetX, targetY);
-      navigationInstruction instructions[INSTRUCTION_BUFFER_SIZE];
-      uint8_t instructionCnt = calculatePath(instructions);
-      transmitInstructions(instructions, instructionCnt);
+		  printf("Received message with x: %f, y: %f\n", targetX, targetY);
+		  navigationInstruction instructions[INSTRUCTION_BUFFER_SIZE];
+		  uint8_t instructionCnt = calculatePath(instructions);
+		  transmitInstructions(instructions, instructionCnt);
 		  printSensorMeasurements(targetMeasurements);
-		  printf("Received message with x: %d, y: %d\n", targetX, targetY);
+		  printf("Received message with x: %f, y: %f\n", targetX, targetY);
 		}
 		vTaskSuspend(NULL);
   }
