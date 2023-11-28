@@ -52,6 +52,7 @@ I2C_HandleTypeDef hi2c1;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart2_rx;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -314,8 +315,8 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+//  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+//  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
 
   /* USER CODE END 2 */
@@ -366,6 +367,7 @@ int main(void)
   NavigationTaskHandle = osThreadNew(StartNavigationTask, NULL, &NavigationTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
+  vTaskSuspend(NavigationTaskHandle);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
@@ -573,6 +575,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+  /* DMA1_Channel6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 
 }
 
@@ -660,21 +665,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	// }
 	else if (huart->Instance == USART2)
 	{
-		  // xQueueSendFromISR(uart2QueueHandle, uart2_buffer, NULL);
 //		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-      newInstruction.startDelimiter = uart2_buffer[11];
+      newInstruction.startDelimiter = uart2_buffer[0];
 
-      memcpy(&newInstruction.xCoord, &uart2_buffer[0], sizeof(float));
-      memcpy(&newInstruction.yCoord, &uart2_buffer[4], sizeof(float));
+      memcpy(&newInstruction.xCoord, &uart2_buffer[1], sizeof(float));
+      memcpy(&newInstruction.yCoord, &uart2_buffer[5], sizeof(float));
 
-      newInstruction.sensorControl = uart2_buffer[8];
-      newInstruction.endDelimiter = uart2_buffer[9];
+      newInstruction.sensorControl = uart2_buffer[9];
+      newInstruction.endDelimiter = uart2_buffer[10];
 //		xQueueSendFromISR(uart2QueueHandle, &msg, NULL);
 
-		  xTaskResumeFromISR(NavigationTaskHandle);
-
       // Prepare to receive the next character
-      HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
+      HAL_UART_Receive_DMA(&huart2, uart2_buffer, 11);
+
+      xTaskResumeFromISR(NavigationTaskHandle);
+
 	}
 }
 
@@ -701,9 +706,9 @@ void printSensorMeasurements(SensorMeasurements measurements) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-  HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
-  // HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+//  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+  HAL_UART_Receive_DMA(&huart2, uart2_buffer,11);
+  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
   /* Infinite loop */
   for(;;)
