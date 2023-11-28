@@ -8,12 +8,17 @@
 #include "queue.h"
 #include "semphr.h"
 
+
+#include "CustomProtocol.h"
+
 static int stdio_putchar(char c, FILE * stream);
 static int stdio_getchar(FILE *stream);
 static FILE UsartStdio = FDEV_SETUP_STREAM(stdio_putchar, stdio_getchar,_FDEV_SETUP_RW);
 
 QueueHandle_t UsartTxQueue;
 QueueHandle_t UsartRxQueue;
+
+uint8_t receiveStarted = 0;
 
 void DriverUSARTInit(void)
 {
@@ -28,6 +33,7 @@ void DriverUSARTInit(void)
 	USART.CTRLC=0b00000011;
 	
 	
+	//TODO: chang ebaud to 115200
 	USART.BAUDCTRLA=0xE5; //BSEL=3301, BSCALE=-5 19200 baud
 	USART.BAUDCTRLB=0xBC; 
 	
@@ -75,13 +81,26 @@ ISR(USART_TXC_vect)
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
+
+//Check for delimiters in ISR
 ISR(USART_RXC_vect)
 {
 	char c;
 	BaseType_t xHigherPriorityTaskWoken=pdFALSE;
 	
 	c=USART.DATA;
-	xQueueSendToBackFromISR(UsartRxQueue,&c,&xHigherPriorityTaskWoken);
+	if (receiveStarted==1) {
+		if (c==END_DELIMITER) {
+			receiveStarted=0;
+			USART_RX_transmission_complete = 1;
+		} else {
+			UASART_RX_Queue_has_data = 1;
+			xQueueSendToBackFromISR(UsartRxQueue,&c,&xHigherPriorityTaskWoken);
+		}
+	} else if (c==START_DELIMITER) {
+		receiveStarted=1;
+		USART_RX_transmission_complete = 0;
+	}
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	
 }

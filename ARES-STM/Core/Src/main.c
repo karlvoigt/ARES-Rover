@@ -25,11 +25,9 @@
 #include <stdio.h>
 #include "queue.h"
 #include "LTR329.h"
-#include "SHT40.h"
 #include "CustomProtocol.h"
-#include "globalDefs.h"
 #include <math.h>
-#include <stdlib.h>
+#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -53,13 +51,14 @@ I2C_HandleTypeDef hi2c1;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityRealtime,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for UART2Task */
 osThreadId_t UART2TaskHandle;
@@ -82,13 +81,6 @@ const osThreadAttr_t LightSensor_Tas_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal1,
 };
-/* Definitions for Temp_Task */
-osThreadId_t Temp_TaskHandle;
-const osThreadAttr_t Temp_Task_attributes = {
-  .name = "Temp_Task",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
-};
 /* Definitions for uart1Queue */
 osMessageQueueId_t uart1QueueHandle;
 const osMessageQueueAttr_t uart1Queue_attributes = {
@@ -100,7 +92,6 @@ const osMessageQueueAttr_t uart2Queue_attributes = {
   .name = "uart2Queue"
 };
 /* USER CODE BEGIN PV */
-#define UART_BUFFER_SIZE 128  // Adjust the size as needed
 
 uint8_t uart1_buffer[1], uart2_buffer[1];
 uint8_t uart1_accumulate_buffer[UART_BUFFER_SIZE],uart2_accumulate_buffer[UART_BUFFER_SIZE];;
@@ -108,12 +99,27 @@ uint8_t uart1_accumulate_pos = 0;
 uint8_t uart2_accumulate_pos = 0;
 uint16_t light_ch0, light_ch1;
 uint8_t receivedData[100]; // Adjust size as needed
+const uint8_t verbose=1;
+
+ReceiveState UART1receiveState = WAIT_FOR_START_DELIMITER;
+uint16_t dataLength = 0;
+uint8_t dataReceived = 0;
+uint8_t* dma_buffer = NULL;
+float curX = 0;
+float curY = 0;
+float curAngle = 0;
+float targetX = 0;
+float targetY = 0;
+float targetAngle = 0;
+float plannedAngle = 0;
+SensorMeasurements targetMeasurements;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART1_UART_Init(void);
@@ -121,7 +127,6 @@ void StartDefaultTask(void *argument);
 void UART2_Task(void *argument);
 void UART1_Task(void *argument);
 void LightSensorTask(void *argument);
-void TempTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -135,11 +140,128 @@ PUTCHAR_PROTOTYPE {
 	return ch;
 }
 
+void transmitInstructions(navigationInstruction* instructions, uint8_t instructionCnt);
+uint8_t receiveInstructions(uint8_t* data, uint16_t dataLength);
+void printInstructions(navigationInstruction* instructions, uint16_t numInstructions);
+uint8_t calculatePath(navigationInstruction* instructions);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint8_t calculatePath(navigationInstruction* instructions){
+    uint8_t instructionCount = 0;
+    float deltaX = targetX - curX;
+    float deltaY = targetY - curY;
 
+    // Calculate the angle to the target point
+    float targetAngle = atan2(deltaY, deltaX) * (180.0 / M_PI);
+    targetAngle = fmod(targetAngle + 360.0, 360.0); // Ensure the angle is between 0 and 360
+
+    // Calculate the shortest turn to the target angle
+    float turnAngle = targetAngle - curAngle;
+    if (turnAngle < -180.0) turnAngle += 360.0;
+    if (turnAngle > 180.0) turnAngle -= 360.0;
+
+    // Turn to face the target point
+    if (turnAngle != 0.0) {
+        instructions[instructionCount].instructionType = turnAngle > 0.0 ? CLOCKWISE : COUNTERCLOCKWISE;
+        instructions[instructionCount].instructionValue = fabs(turnAngle);
+        instructionCount++;
+        plannedAngle = targetAngle;
+    }
+
+    // Move to the target point
+    float distance = sqrt(deltaX * deltaX + deltaY * deltaY);
+    instructions[instructionCount].instructionType = turnAngle >= -90.0 && turnAngle <= 90.0 ? FORWARD : BACKWARD;
+    instructions[instructionCount].instructionValue = distance;
+    instructionCount++;
+
+    // Add a stop instruction
+    instructions[instructionCount].instructionType = STOP;
+    instructions[instructionCount].instructionValue = 0.0;
+    instructionCount++;
+
+    return instructionCount;
+}
+
+void transmitInstructions(navigationInstruction* instructions, uint8_t instructionCnt){
+    /* Transmit the instructions to the line bot
+      Transmissions consists of a START_DELIMITER, Instruction Count, payload and END_DELIMITER
+      Instruction Count is a 1 byte value
+      Payload consists of the instructions which are 5 bytes each
+      The data is transmitted on USART2 using HAL_UART_Transmit
+    */
+    uint8_t transmission[instructionCnt*sizeof(navigationInstruction) + 3];
+
+    transmission[0] = START_DELIMITER;
+    transmission[1] = instructionCnt;
+    for (int i = 0; i < instructionCnt; i++) {
+        transmission[2 + i*sizeof(navigationInstruction)] = instructions[i].instructionType;
+        memcpy(&transmission[3 + i*sizeof(navigationInstruction)], &instructions[i].instructionValue, 4);
+    }
+    transmission[instructionCnt*sizeof(navigationInstruction) + 2] = END_DELIMITER;
+    // HAL_UART_Transmit(&huart2, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
+    receiveInstructions(transmission, instructionCnt*sizeof(navigationInstruction) + 3);
+}
+
+// Function to receive and decode instructions
+uint8_t receiveInstructions(uint8_t* data, uint16_t dataLength) {
+    // Check the start and end delimiters
+    if (data[0] != START_DELIMITER || data[dataLength - 1] != END_DELIMITER) {
+        return 0; // Invalid data
+    }
+
+    // Calculate the number of instructions
+    uint16_t numInstructions = (dataLength - 2) / sizeof(navigationInstruction);
+    //check that the calculated number of instructions matches the transmitted number
+    if (numInstructions != data[1]) {
+        return 0; // Invalid data
+    }
+    navigationInstruction instructions[numInstructions];
+
+    // Decode the instructions
+    for (uint16_t i = 0; i < numInstructions; i++) {
+        memcpy(&instructions[i], &data[i * sizeof(navigationInstruction) + 1], sizeof(navigationInstruction));
+    }
+
+    // Print the instructions
+    printInstructions(instructions, numInstructions);
+    return numInstructions;
+}
+
+// Function to print the instructions
+void printInstructions(navigationInstruction* instructions, uint16_t numInstructions) {
+  for (uint16_t i = 0; i < numInstructions; i++) {
+    printf("Instruction %d: ", i);
+    switch (instructions[i].instructionType) {
+      case LEFT:
+        printf("Turn left and drive %f mm\n", instructions[i].instructionValue);
+        break;
+      case RIGHT:
+        printf("Turn right and drive %f mm\n", instructions[i].instructionValue);
+        break;
+      case FORWARD:
+        printf("Drive %f mm forwards\n", instructions[i].instructionValue);
+        break;
+      case BACKWARD:
+        printf("Drive %f mm backwards\n", instructions[i].instructionValue);
+        break;
+      case CLOCKWISE:
+        printf("Turn clockwise %f degrees\n", instructions[i].instructionValue);
+        break;
+      case COUNTERCLOCKWISE:
+        printf("Turn counterclockwise %f degrees\n", instructions[i].instructionValue);
+        break;
+      case STOP:
+        printf("Stop\n");
+        break;
+      default:
+        printf("Unknown instruction type\n");
+        break;
+    }
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -170,12 +292,14 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  LTR329_Init();
-  SHT40_Init();
+  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+  printf("Setup complete\n");
 
   /* USER CODE END 2 */
 
@@ -199,7 +323,7 @@ int main(void)
   uart1QueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &uart1Queue_attributes);
 
   /* creation of uart2Queue */
-  uart2QueueHandle = osMessageQueueNew (16, sizeof(uint16_t), &uart2Queue_attributes);
+  uart2QueueHandle = osMessageQueueNew (2, sizeof(Dash7ToSTM32Message), &uart2Queue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -217,9 +341,6 @@ int main(void)
 
   /* creation of LightSensor_Tas */
   LightSensor_TasHandle = osThreadNew(LightSensorTask, NULL, &LightSensor_Tas_attributes);
-
-  /* creation of Temp_Task */
-  Temp_TaskHandle = osThreadNew(TempTask, NULL, &Temp_Task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -417,6 +538,22 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -449,20 +586,88 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+  if (huart->Instance == USART1)
+    {
+        switch (UART1receiveState) {
+            case WAIT_FOR_START_DELIMITER:
+                if (uart1_buffer[0] == START_DELIMITER) {
+                    UART1receiveState = WAIT_FOR_DATA_LENGTH_HIGH;
+                }
+                HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+                break;
 
-	if (huart->Instance == USART1)
-	{
-		xQueueSendFromISR(uart1QueueHandle, uart1_buffer, NULL);
-		HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
-	}
+            case WAIT_FOR_DATA_LENGTH_HIGH:
+                dataLength = uart1_buffer[0] << 8;
+                UART1receiveState = WAIT_FOR_DATA_LENGTH_LOW;
+                HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+                break;
+
+            case WAIT_FOR_DATA_LENGTH_LOW:
+                dataLength |= uart1_buffer[0];
+                UART1receiveState = WAIT_FOR_DATA;
+                dma_buffer = (uint8_t*)pvPortMalloc((dataLength*12 + 1) * sizeof(uint8_t)); // Allocate buffer for DMA transfer
+                HAL_UART_Receive_DMA(&huart1, dma_buffer, dataLength*12 + 1);
+                break;
+
+            case WAIT_FOR_DATA:
+                // DMA transfer is complete
+                HAL_UART_DMAStop(&huart1); // Stop the DMA transfer
+
+                // Check if the last byte is the end delimiter
+                if (dma_buffer[dataLength*12] == END_DELIMITER) {
+                    // Process the received data here
+                    // You can send the data to a FreeRTOS task using a queue
+                    xQueueSendFromISR(uart1QueueHandle, dma_buffer, NULL);
+                }
+
+                // Free the DMA buffer
+                vPortFree(dma_buffer);
+                dma_buffer = NULL;
+
+                // Restart the interrupt-based reception
+                UART1receiveState = WAIT_FOR_START_DELIMITER;
+                HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+                break;
+        }
+    }
+	// if (huart->Instance == USART1)
+	// {
+	// 	xQueueSendFromISR(uart1QueueHandle, uart1_buffer, NULL);
+	// 	HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+	// }
 	else if (huart->Instance == USART2)
 	{
+		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
 		xQueueSendFromISR(uart2QueueHandle, uart2_buffer, NULL);
+=======
+//		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+      newInstruction.startDelimiter = uart2_buffer[11];
+
+      memcpy(&newInstruction.xCoord, &uart2_buffer[0], sizeof(float));
+      memcpy(&newInstruction.yCoord, &uart2_buffer[4], sizeof(float));
+
+      newInstruction.sensorControl = uart2_buffer[8];
+      newInstruction.endDelimiter = uart2_buffer[9];
+//		xQueueSendFromISR(uart2QueueHandle, &msg, NULL);
+
+		xTaskResumeFromISR(navigationTaskHandle);
+>>>>>>> Stashed changes
 
 		// Prepare to receive the next character
-		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+//		HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
 
 	}
+}
+
+
+
+void printSensorMeasurements(SensorMeasurements measurements) {
+    const char* measurementStrings[] = {"?","No", "Yes", "Optional"};
+
+    printf("\nTemperature: %s\n", measurementStrings[measurements.temperature]);
+    printf("Humidity: %s\n", measurementStrings[measurements.humidity]);
+    printf("Visible Light: %s\n", measurementStrings[measurements.visibleLight]);
+    printf("Infrared: %s\n", measurementStrings[measurements.infrared]);
 }
 
 /* USER CODE END 4 */
@@ -477,13 +682,17 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+<<<<<<< Updated upstream
+=======
+   HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+//  HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
   HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
+>>>>>>> Stashed changes
   /* Infinite loop */
   for(;;)
   {
-    osDelay(10000);
+    osDelay(1);
   }
   /* USER CODE END 5 */
 }
@@ -498,37 +707,32 @@ void StartDefaultTask(void *argument)
 void UART2_Task(void *argument)
 {
   /* USER CODE BEGIN UART2_Task */
-	char receivedChar;
-	  /* Infinite loop */
-	  for(;;)
-	  {
-	    if (xQueueReceive(uart2QueueHandle, &receivedChar, portMAX_DELAY) == pdPASS)
-	    {
-
-	      // Check if the end of transmission is reached
-	      if (receivedChar == '\n' || receivedChar == '\r')
-	      {
-	        // Null-terminate the string
-	        uart2_accumulate_buffer[uart2_accumulate_pos] = '\0';
-
-	        // Process the complete message here
-//	        printf("%s\n", uart2_accumulate_buffer);
-	        HAL_UART_Transmit(&huart1, uart2_accumulate_buffer,UART_BUFFER_SIZE , HAL_MAX_DELAY);
-
-	        // Reset the accumulate buffer position
-	        uart2_accumulate_pos = 0;
-	      } else {
-		      // Accumulate the received characters
-		      uart2_accumulate_buffer[uart2_accumulate_pos++] = receivedChar;
-	      }
-
-	      // Make sure we don't overflow the buffer
-	      if (uart2_accumulate_pos >= UART_BUFFER_SIZE)
-	      {
-	        uart2_accumulate_pos = 0;
-	      }
-	    }
-	  }
+<<<<<<< Updated upstream
+	Dash7ToSTM32Message receivedMessage;
+=======
+//	uint8_t data[sizeof(Dash7ToSTM32Message)];
+	Dash7ToSTM32Message msg;
+//	MessageUnion receivedMessage;
+>>>>>>> Stashed changes
+  /* Infinite loop */
+  for(;;)
+  {
+    if (xQueueReceive(uart2QueueHandle, &receivedMessage, portMAX_DELAY) == pdPASS)
+    {
+      //Check for message structure
+      if (receivedMessage.startDelimiter != START_DELIMITER || receivedMessage.endDelimiter != END_DELIMITER)
+      {
+        // Invalid message structure
+        continue;
+      } else {
+        targetX = receivedMessage.xCoord;
+        targetY = receivedMessage.yCoord;
+        targetMeasurements = *(SensorMeasurements*)&receivedMessage.sensorControl;
+        printSensorMeasurements(targetMeasurements);
+        printf("Received message with x: %f, y: %f\n", targetX, targetY);
+      }
+    }
+  }
   /* USER CODE END UART2_Task */
 }
 
@@ -542,36 +746,11 @@ void UART2_Task(void *argument)
 void UART1_Task(void *argument)
 {
   /* USER CODE BEGIN UART1_Task */
-	char receivedChar;
-	/* Infinite loop */
-	for(;;)
-	{
-		if (xQueueReceive(uart1QueueHandle, &receivedChar, portMAX_DELAY) == pdPASS)
-		{
-
-		  // Check if the end of transmission is reached
-		  if ( receivedChar == '\r')
-		  {
-			// Null-terminate the string
-			uart1_accumulate_buffer[uart1_accumulate_pos] = '\0';
-
-			// Process the complete message here
-			printf("%s\r", uart1_accumulate_buffer);
-
-			// Reset the accumulate buffer position
-			uart1_accumulate_pos = 0;
-		  } else {
-			  // Accumulate the received characters
-			  uart1_accumulate_buffer[uart1_accumulate_pos++] = receivedChar;
-		  }
-
-		  // Make sure we don't overflow the buffer
-		  if (uart1_accumulate_pos >= UART_BUFFER_SIZE)
-		  {
-			uart1_accumulate_pos = 0;
-		  }
-		}
-	}
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
   /* USER CODE END UART1_Task */
 }
 
@@ -585,15 +764,14 @@ void UART1_Task(void *argument)
 void LightSensorTask(void *argument)
 {
   /* USER CODE BEGIN LightSensorTask */
+	LTR329_Init();
 	/* Infinite loop */
 	  for(;;)
 	  {
 		// Read light data
 		LTR329_Read_Light(&light_ch0, &light_ch1);
-		if (verbose) {
-			printf("Light Ch0: %d \n Light Ch1: %d\n________\n",light_ch0,light_ch1);
-		}
-		else sendLightSensorData(light_ch0);
+//		if (verbose) printf("Light Ch0: %d \n Light Ch1: %d\n________\n\n",light_ch0,light_ch1);
+		sendLightSensorData(light_ch0);
 		osDelay(2000);
 	  }
 	  // In case we accidentally exit from task loop
@@ -601,6 +779,8 @@ void LightSensorTask(void *argument)
   /* USER CODE END LightSensorTask */
 }
 
+<<<<<<< Updated upstream
+=======
 /* USER CODE BEGIN Header_TempTask */
 /**
 * @brief Function implementing the Temp_Task thread.
@@ -614,32 +794,41 @@ void TempTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  uint16_t rawTemperature = 404;
-	  uint16_t rawHumidity = 404;
-
-	  // Read temperature and humidity from the SHT40 sensor
-	  SHT40_Read_Temp_Hum(&rawTemperature, &rawHumidity);
-	  if (verbose) {
-		  // Scale and convert the raw temperature to an integer
-		  int temp_scaled = (-45 * TEMPERATURE_SCALE_FACTOR) +
-						   (175 * TEMPERATURE_SCALE_FACTOR * rawTemperature) / RAW_VALUE_MAX;
-
-		  // Scale and convert the raw humidity to an integer
-		  int hum_scaled = (100 * TEMPERATURE_SCALE_FACTOR * rawHumidity) / RAW_VALUE_MAX;
-
-		  // Print the scaled temperature and humidity as integers
-		  printf("Temperature: %d.%03dC, Humidity: %d.%03d%%RH\n________\n",
-				 temp_scaled / TEMPERATURE_SCALE_FACTOR, abs(temp_scaled % TEMPERATURE_SCALE_FACTOR),
-				 hum_scaled / TEMPERATURE_SCALE_FACTOR, hum_scaled % TEMPERATURE_SCALE_FACTOR);
-	  }
-
-	  // Delay for a while before reading again
-	  osDelay(pdMS_TO_TICKS(1000));  // 1 second delay
-
+    osDelay(1);
   }
   /* USER CODE END TempTask */
 }
 
+/* USER CODE BEGIN Header_StartNavigationTask */
+/**
+* @brief Function implementing the navigationTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartNavigationTask */
+void StartNavigationTask(void *argument)
+{
+  /* USER CODE BEGIN StartNavigationTask */
+  /* Infinite loop */
+  for(;;)
+  {
+	  if (newInstruction.startDelimiter == START_DELIMITER && newInstruction.endDelimiter == END_DELIMITER)
+		{
+		  targetX = newInstruction.xCoord;
+		  targetY = newInstruction.yCoord;
+		  targetMeasurements = *(SensorMeasurements*)&newInstruction.sensorControl;
+		  printSensorMeasurements(targetMeasurements);
+		  printf("Received message with x: %f, y: %f\n", targetX, targetY);
+      navigationInstruction instructions[INSTRUCTION_BUFFER_SIZE];
+      uint8_t instructionCnt = calculatePath(instructions);
+      transmitInstructions(instructions, instructionCnt);
+		}
+		vTaskSuspend(NULL);
+  }
+  /* USER CODE END StartNavigationTask */
+}
+
+>>>>>>> Stashed changes
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM6 interrupt took place, inside

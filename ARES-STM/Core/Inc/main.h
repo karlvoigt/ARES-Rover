@@ -69,6 +69,61 @@ void Error_Handler(void);
 #define LD3_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+#define UART_BUFFER_SIZE 128  // Adjust the size as needed
+#define INSTRUCTION_BUFFER_SIZE 5 //Size of the buffer for the navigation instructions
+
+
+typedef enum {
+    WAIT_FOR_START_DELIMITER,
+    WAIT_FOR_DATA_LENGTH_HIGH,
+    WAIT_FOR_DATA_LENGTH_LOW,
+    WAIT_FOR_DATA
+} ReceiveState;
+
+typedef enum {
+    WAIT_FOR_GYRO_X_HIGH,
+    WAIT_FOR_GYRO_X_LOW,
+    WAIT_FOR_GYRO_Y_HIGH,
+    WAIT_FOR_GYRO_Y_LOW,
+    WAIT_FOR_GYRO_Z_HIGH,
+    WAIT_FOR_GYRO_Z_LOW,
+    WAIT_FOR_ACCEL_X_HIGH,
+    WAIT_FOR_ACCEL_X_LOW,
+    WAIT_FOR_ACCEL_Y_HIGH,
+    WAIT_FOR_ACCEL_Y_LOW,
+    WAIT_FOR_ACCEL_Z_HIGH,
+    WAIT_FOR_ACCEL_Z_LOW
+} MEMS_Data_State;
+
+typedef enum uint8_t {
+    RIGHT,
+    LEFT,
+    FORWARD,
+    BACKWARD,
+    CLOCKWISE,
+    COUNTERCLOCKWISE,
+    STOP,
+    MEASURE,
+    SPEED
+} navInstructionType;
+
+typedef struct __attribute__((packed)) {
+    navInstructionType instructionType : 8;
+    float instructionValue;
+} navigationInstruction;
+
+typedef enum {
+    MEASURE_NO = 0b10,
+    MEASURE_YES = 0b01,
+    MEASURE_OPTIONAL = 0b11
+} MeasureState;
+
+typedef struct __attribute__((packed)) {
+    MeasureState temperature : 2;
+    MeasureState humidity : 2;
+    MeasureState visibleLight : 2;
+    MeasureState infrared : 2;
+} SensorMeasurements;
 
 /* USER CODE END Private defines */
 

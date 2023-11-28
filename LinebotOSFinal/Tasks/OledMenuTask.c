@@ -15,6 +15,8 @@
 #include "ADCTask.h"
 #include "RGBTask.h"
 #include "GyroTask.h"
+#include "AccTask.h"
+#include "IPS_Task.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -22,12 +24,13 @@
 #include <stdio.h>
 
 
-#define NUM_LINES 10
+#define NUM_LINES 11
 #define DISPLAYED_LINES 6
 #define MAX_TASKS 20 //Max number of tasks to display in CPU stats page
 
 char MenuLines[NUM_LINES][20]=
 {
+	"  Karls Task",
 	"  CPU status",
 	"  Motor speed",
 	"  ADPS9960",
@@ -48,6 +51,7 @@ void WorkerOLEDMenu(void *pvParameters);
 void DrawMenu();
 void DownMenu();
 void UpMenu();
+void PageKarlsTask();
 void PageCPUStatus();
 void PageMotorSpeed();
 void PageADPS9960();
@@ -75,16 +79,17 @@ void WorkerOLEDMenu(void *pvParameters)
 		else if (Stick & CURSOR_UP) UpMenu();
 		else if (Stick & CURSOR_PRESS)
 		{
-			if (SelItem==0) PageCPUStatus();
-			else if (SelItem==1) PageMotorSpeed();
-			else if (SelItem==2) PageADPS9960();
-			else if (SelItem==3) PageADC();
-			else if (SelItem==4) PageLineFollowSpeed();
-			else if (SelItem==5) PageLineFollowDirect();
-			else if (SelItem==6) PageRGB();
-			else if (SelItem==7) PageGyro();	
-			else if (SelItem==8) PageRanger();
-			else if (SelItem==9) configASSERT(false); //Force halt
+			if (SelItem==0) PageKarlsTask();
+			else if (SelItem==1) PageCPUStatus();
+			else if (SelItem==2) PageMotorSpeed();
+			else if (SelItem==3) PageADPS9960();
+			else if (SelItem==4) PageADC();
+			else if (SelItem==5) PageLineFollowSpeed();
+			else if (SelItem==6) PageLineFollowDirect();
+			else if (SelItem==7) PageRGB();
+			else if (SelItem==8) PageGyro();	
+			else if (SelItem==9) PageRanger();
+			else if (SelItem==10) configASSERT(false); //Force halt
 		}
 		
 		DrawMenu(TopItem,SelItem);
@@ -113,7 +118,12 @@ void DrawMenu()
 
 void DownMenu()
 {
-	if (SelItem<NUM_LINES-1) SelItem++;
+	if (SelItem<NUM_LINES-1) 
+		SelItem++;
+	else {
+		SelItem=0;
+		TopItem=0;
+	}
 	if (SelItem>=TopItem+DISPLAYED_LINES) TopItem++;
 }
 
@@ -122,6 +132,58 @@ void UpMenu()
 	if (SelItem>0) SelItem--;
 	if (SelItem<TopItem) TopItem=SelItem;
 }
+
+void PageKarlsTask() {
+    uint8_t Stick;
+    char s[32];
+    float DistX, DistY, DistZ, Ax, Ay, Az, Gx, Gy, Gz;
+    
+    vTaskDelay(300);
+    while (1)
+    {
+        Stick = DriverCursorStickGetFifo(300);
+        
+        DriverOLEDClearScreen();
+
+		IPSGetPosition(&DistX, &DistY, &DistZ);
+        IPSGetVelocity(&VelX, &VelY, &VelZ);
+        IPSGetAcceleration(&Ax, &Ay, &Az);
+        
+        sprintf(s, "Dist X:%.2f", DistX);
+        DriverOLEDPrintSmText(0, s, 0);
+
+        sprintf(s, "Dist Y:%.2f", DistY);
+        DriverOLEDPrintSmText(1, s, 0);
+
+        sprintf(s, "Dist Z:%.2f", DistZ);
+        DriverOLEDPrintSmText(2, s, 0);
+        
+        sprintf(s, "X: G: %.2f A: %.2f", Gx, Ax);
+        DriverOLEDPrintSmText(3, s, 0);
+
+        sprintf(s, "Y: G: %.2f A: %.2f", Gy, Ay);
+        DriverOLEDPrintSmText(4, s, 0);
+
+        sprintf(s, "Z: G: %.2f A: %.2f", Gz, Az);
+        DriverOLEDPrintSmText(5, s, 0);
+
+        // If you have more data to display, you can use the remaining rows
+        
+        if (Stick & CURSOR_UP);
+        if (Stick & CURSOR_DOWN);
+        if (Stick & CURSOR_RIGHT);
+        if (Stick & CURSOR_LEFT);
+        if (Stick & CURSOR_PRESS)
+        {
+            vTaskDelay(300);
+            return;
+        }
+        
+        DriverOLEDUpdate();
+    }
+}
+
+
 
 void PageCPUStatus()
 {
