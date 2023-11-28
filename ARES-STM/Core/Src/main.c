@@ -93,7 +93,7 @@ const osMessageQueueAttr_t uart2Queue_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-uint8_t uart1_buffer[1], uart2_buffer[1];
+uint8_t uart1_buffer[1], uart2_buffer[sizeof(Dash7ToSTM32Message)];
 uint8_t uart1_accumulate_buffer[UART_BUFFER_SIZE],uart2_accumulate_buffer[UART_BUFFER_SIZE];;
 uint8_t uart1_accumulate_pos = 0;
 uint8_t uart2_accumulate_pos = 0;
@@ -637,8 +637,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	// }
 	else if (huart->Instance == USART2)
 	{
-		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-		xQueueSendFromISR(uart2QueueHandle, uart2_buffer, NULL);
+		  // xQueueSendFromISR(uart2QueueHandle, uart2_buffer, NULL);
 //		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
       newInstruction.startDelimiter = uart2_buffer[11];
 
@@ -649,11 +648,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
       newInstruction.endDelimiter = uart2_buffer[9];
 //		xQueueSendFromISR(uart2QueueHandle, &msg, NULL);
 
-		xTaskResumeFromISR(navigationTaskHandle);
+		  xTaskResumeFromISR(navigationTaskHandle);
 
-		// Prepare to receive the next character
-//		HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
-
+      // Prepare to receive the next character
+      HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
 	}
 }
 
@@ -680,9 +678,9 @@ void printSensorMeasurements(SensorMeasurements measurements) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-   HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-//  HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
-  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+  HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
+  // HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
   /* Infinite loop */
   for(;;)
@@ -702,13 +700,9 @@ void StartDefaultTask(void *argument)
 void UART2_Task(void *argument)
 {
   /* USER CODE BEGIN UART2_Task */
-<<<<<<< Updated upstream
-	Dash7ToSTM32Message receivedMessage;
-=======
-//	uint8_t data[sizeof(Dash7ToSTM32Message)];
+	uint8_t data[sizeof(Dash7ToSTM32Message)];
 	Dash7ToSTM32Message msg;
-//	MessageUnion receivedMessage;
->>>>>>> Stashed changes
+	MessageUnion receivedMessage;
   /* Infinite loop */
   for(;;)
   {
@@ -810,11 +804,12 @@ void StartNavigationTask(void *argument)
 		  targetX = newInstruction.xCoord;
 		  targetY = newInstruction.yCoord;
 		  targetMeasurements = *(SensorMeasurements*)&newInstruction.sensorControl;
-		  printSensorMeasurements(targetMeasurements);
-		  printf("Received message with x: %f, y: %f\n", targetX, targetY);
+      printf("Received message with x: %f, y: %f\n", targetX, targetY);
       navigationInstruction instructions[INSTRUCTION_BUFFER_SIZE];
       uint8_t instructionCnt = calculatePath(instructions);
       transmitInstructions(instructions, instructionCnt);
+		  printSensorMeasurements(targetMeasurements);
+		  printf("Received message with x: %d, y: %d\n", targetX, targetY);
 		}
 		vTaskSuspend(NULL);
   }
