@@ -680,13 +680,10 @@ void printSensorMeasurements(SensorMeasurements measurements) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-<<<<<<< Updated upstream
-=======
    HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
 //  HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
   HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
->>>>>>> Stashed changes
   /* Infinite loop */
   for(;;)
   {
