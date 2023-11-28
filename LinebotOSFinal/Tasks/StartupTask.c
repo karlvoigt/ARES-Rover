@@ -35,7 +35,7 @@
 static void WorkerStartup(void *pvParameters);
 
 //Function definitions
-void InitStartupTask()
+void m InitStartupTask()
 {
 	xTaskCreate( WorkerStartup, "startup", 256, NULL, tskIDLE_PRIORITY+3, NULL );	
 }
@@ -46,17 +46,17 @@ static void WorkerStartup(void *pvParameters)
 	
 	DriverPowerVccAuxSet(1);//Enable Auxillary power line
 	DriverCursorstickInit();//Initialize cursor stick
-	DriverLedInit();		//Initialize LED's
+	// DriverLedInit();		//Initialize LED's
 	DriverUSARTInit();		//USART init and link to stdio
 	DriverPowerInit();		//Initialize aux power driver
 	
 	DriverTWIMInit();		//Initialize TWI in master mode
 	DriverPL9823Init();		//Initialize PL9823 LEDs
-	DriverAdcInit();		//Initialize ADC driver
+	//DriverAdcInit();		//Initialize ADC driver
 	
 	DriverOLEDInit(2);		//Initialize OLED display
-	DriverAdps9960Init();	//Initialize color sensor	
-	DriverVL53L0XInit();	//Initialize rangefinder
+	// DriverAdps9960Init();	//Initialize color sensor	
+	//DriverVL53L0XInit();	//Initialize rangefinder
 
 	
 	vTaskDelay(50);
@@ -66,13 +66,15 @@ static void WorkerStartup(void *pvParameters)
 	//Initialize application tasks			
 	
 	InitOLEDMenuTask();
-	InitADCTask();
+	// InitADCTask();
 	InitMotorPosTask();
 	InitMotorSpeedTask();
-	InitLineFollowerSpeedTask();
-	InitLineFollowerDirectTask();
-	InitRGBTask();
+	// InitLineFollowerSpeedTask();
+	// InitLineFollowerDirectTask();
+	// InitRGBTask();
 	InitGyroTask();
+	InitAccTask();
+	InitIPSTask();
 	InitTerminalTask();
 	InitMotionTask();
 	
