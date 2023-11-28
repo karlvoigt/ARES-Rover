@@ -30,9 +30,8 @@ int main(void)
 	
 	//Init startup task
 	InitStartupTask();
-    MotorSpeedSet(100, 200); // Set initial speeds for the motors
-    InitMotorSpeedTask();
-	EnableMotorSpeedTask();
+	
+	
 	//Start scheduler loop
 	vTaskStartScheduler();	
 	

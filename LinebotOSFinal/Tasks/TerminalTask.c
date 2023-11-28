@@ -91,6 +91,7 @@ static void WorkerTerminal(void *pvParameters)
 			printf_P (PSTR("getgyr :returns gyroscope info in format 'yawrate (deg/s) yaw(deg)\r\n"));
 			printf_P (PSTR("getadc :returns Analog channels in format 'left_line_sensor mid_line_sensor right_line_sensor potentiometer\r\n"));
 			printf_P (PSTR("auxpwr state:'state'=1: turn on aux power net, 'state'=0: turn off aux power net\r\n"));
+			printf_P (PSTR("sleep :enter sleep mode\r\n"));
 		}
 		else if (strstr(Cmd,"tsklst"))
 		{
@@ -153,6 +154,13 @@ static void WorkerTerminal(void *pvParameters)
 		{
 			DriverPowerVccAuxSet((uint8_t) Pars[0]);
 			printf ("OK\r\n");
+		}
+		else if (strstr(Cmd, "sleep"))
+		{
+			printf("Grrrrrr mimimimi");
+			fflush(stdout);
+			vTaskDelay(50/portTICK_PERIOD_MS);
+			enterSleepMode();
 		}
 		else
 		printf ("Unknown command\r\n");

@@ -30,6 +30,8 @@ Drivers\DriverUSART.c
 
 Drivers\DriverVL53L0x.c
 
+Drivers\PowerManagement.c
+
 FreeRTOS\heap_2.c
 
 FreeRTOS\list.c

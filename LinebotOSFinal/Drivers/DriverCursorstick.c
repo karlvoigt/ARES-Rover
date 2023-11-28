@@ -18,7 +18,7 @@ void DriverCursorstickInit(void)
 	PORTB.PIN6CTRL=0b01011001; //Pull up, inverted
 	PORTB.PIN7CTRL=0b01011001; //Pull up, inverted
 	PORTB.INT0MASK=0b11111000; //Interrupt on all cursor stick lines
-	PORTB.INTCTRL=0b01;		   //Enable interrupt0
+	PORTB.INTCTRL=0b11;		   //Enable interrupt0 highest priority
 	
 	CursorstickQueue=xQueueCreate(CURSOR_FIFO_LENGTH,1);
 }
@@ -47,6 +47,9 @@ uint8_t DriverCursorStickGetFifo(TickType_t BlockTime)
 
 ISR (PORTB_INT0_vect)
 {
+	printf("wakey wakey");
+	DriverPowerVccAuxSet(1);
+	PMIC.CTRL |= 0b111;
 	static uint32_t LastIntTime=0;
 	uint32_t CurTime;
 	uint8_t ButtonState;
