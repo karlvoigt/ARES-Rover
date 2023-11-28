@@ -22,13 +22,15 @@
 
 #include "platform.h"
 
-#define UART_PORT_IDX 0 // Adjust based on your hardware setup
-#define UART_BAUDRATE 115200 // Adjust based on your requirements
-#define UART_PINS 0 // Adjust based on your hardware setup
-#define DATA_BUFFER_SIZE 20 // Adjust based on expected data size
+#define UART_PORT_IDX           0       // Adjust based on your hardware setup
+#define UART_BAUDRATE           115200  // Adjust based on your requirements
+#define UART_PINS               0       // Adjust based on your hardware setup
+#define DATA_BUFFER_SIZE        20      // Adjust based on expected data size
 
-#define SENSOR_FILE_ID 0x30 // Example file ID
-#define SENSOR_FILE_SIZE 7  // Size of the sensor data in bytes
+#define SENSOR_FILE_ID          0x50    // Example file ID
+#define SENSOR_FILE_SIZE        7       // Size of the sensor data in bytes
+#define INSTRUCTION_FILE_ID     0x52    // File ID for the instruction file
+#define INSTRUCTION_FILE_SIZE   7       // Size of the instruction file in bytes [Start Delimiter, X Coord upper, X Coord lower, Y Coord upper, Y Coord lower, Sensor Control, End Delimiter]
 
 #define GLOBAL_ECHO_BUFFER_SIZE (DATA_BUFFER_SIZE * 3 + 1)
 char global_echo_buffer[GLOBAL_ECHO_BUFFER_SIZE];
@@ -37,6 +39,18 @@ uart_handle_t* uart_handle;
 uint8_t data_buffer[DATA_BUFFER_SIZE];
 uint16_t data_buffer_index = 0;
 uint8_t transmissionStarted = 0;
+
+static alp_init_args_t alp_init_args = {
+  .alp_command_completed_cb = &on_alp_command_completed_cb,
+  .alp_command_result_cb = &on_alp_command_result_cb
+};
+
+static const d7ap_fs_file_header_t instruction_file_header = { 
+        .allocated_length = INSTRUCTION_FILE_SIZE,
+        .length = INSTRUCTION_FILE_SIZE,
+        .file_permissions
+        = (file_permission_t) { .guest_read = true, .guest_write = true, .user_read = true, .user_write = true },
+        .file_properties.storage_class = FS_STORAGE_PERMANENT };
 
 // Define the D7 interface configuration used for sending the ALP command on
 static alp_interface_config_d7ap_t itf_config = (alp_interface_config_d7ap_t){
@@ -197,16 +211,33 @@ void on_alp_command_result_cb(alp_command_t *alp_command, alp_interface_status_t
   fifo_skip(&alp_command->alp_command_fifo, fifo_get_size(&alp_command->alp_command_fifo));
 }
 
-static alp_init_args_t alp_init_args;
+static void file_modified_callback(uint8_t file_id)
+{
+    int8_t instruction_file_data[INSTRUCTION_FILE_SIZE];
+    d7ap_fs_read_file(SENSOR_FILE_ID, 0, &instruction_file_data, INSTRUCTION_FILE_SIZE, ROOT_AUTH);
+    if(instruction_file_data[0] == START_DELIMITER && instruction_file_data[INSTRUCTION_FILE_SIZE - 1] == END_DELIMITER) {
+        // Send the instruction file data over UART
+        uart_send_bytes(uart_handle, (uint8_t*) instruction_file_data, INSTRUCTION_FILE_SIZE);
+    } else {
+        uart_send_string(uart_handle, "Error: Invalid instruction file data\r\n");
+    }
+}
 
 void bootstrap() {
     log_print_string("Device booted\n");
     d7ap_fs_init();
     d7ap_init();
 
-    alp_init_args.alp_command_completed_cb = &on_alp_command_completed_cb;
-    alp_init_args.alp_command_result_cb = &on_alp_command_result_cb;
     alp_layer_init(&alp_init_args, false);
+    
+    d7ap_fs_init_file(INSTRUCTION_FILE_ID, &instruction_file_header, NULL);
+    // register a callback for when the sensor file is modified
+    d7ap_fs_register_file_modified_callback(INSTRUCTION_FILE_ID, &file_modified_callback);
+    // already trigger this callback to ensure we're already in the right state
+    file_modified_callback(INSTRUCTION_FILE_ID);
+
+    // activate low power listening
+    d7ap_fs_write_dll_conf_active_access_class(0x11);
 
     uart_handle = uart_init(UART_PORT_IDX, UART_BAUDRATE, UART_PINS);
     if(uart_handle == NULL) {
