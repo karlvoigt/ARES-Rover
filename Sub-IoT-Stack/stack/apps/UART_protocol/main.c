@@ -166,8 +166,6 @@ void uart_rx_callback(uart_handle_t* uart_handler, uint8_t byte) {
           }
           uart_send_string(uart_handle, global_echo_buffer);
           uart_send_string(uart_handle, "Error: Buffer overflow\r\n");
-          
-
       }
     } else {
         uart_send_string(uart_handle, "Error: Transmission not yet started\r\n");
