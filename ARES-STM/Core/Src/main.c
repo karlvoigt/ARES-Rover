@@ -219,66 +219,8 @@ void transmitInstructions(navigationInstruction* instructions, uint8_t instructi
         memcpy(&transmission[3 + i*sizeof(navigationInstruction)], &instructions[i].instructionValue, 4);
     }
     transmission[instructionCnt*sizeof(navigationInstruction) + 2] = END_DELIMITER;
-     HAL_UART_Transmit(&huart2, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart2, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
     receiveInstructions(transmission, instructionCnt*sizeof(navigationInstruction) + 3);
-}
-
-// Function to receive and decode instructions
-uint8_t receiveInstructions(uint8_t* data, uint16_t dataLength) {
-    // Check the start and end delimiters
-    if (data[0] != START_DELIMITER || data[dataLength - 1] != END_DELIMITER) {
-        return 0; // Invalid data
-    }
-
-    // Calculate the number of instructions
-    uint16_t numInstructions = (dataLength - 2) / sizeof(navigationInstruction);
-    //check that the calculated number of instructions matches the transmitted number
-    if (numInstructions != data[1]) {
-        return 0; // Invalid data
-    }
-    navigationInstruction instructions[numInstructions];
-
-    // Decode the instructions
-    for (uint16_t i = 0; i < numInstructions; i++) {
-        memcpy(&instructions[i], &data[i * sizeof(navigationInstruction) + 1], sizeof(navigationInstruction));
-    }
-
-    // Print the instructions
-    printInstructions(instructions, numInstructions);
-    return numInstructions;
-}
-
-// Function to print the instructions
-void printInstructions(navigationInstruction* instructions, uint16_t numInstructions) {
-  for (uint16_t i = 0; i < numInstructions; i++) {
-    printf("Instruction %d: ", i);
-    switch (instructions[i].instructionType) {
-      case LEFT:
-        printf("Turn left and drive %f mm\n", instructions[i].instructionValue);
-        break;
-      case RIGHT:
-        printf("Turn right and drive %f mm\n", instructions[i].instructionValue);
-        break;
-      case FORWARD:
-        printf("Drive %f mm forwards\n", instructions[i].instructionValue);
-        break;
-      case BACKWARD:
-        printf("Drive %f mm backwards\n", instructions[i].instructionValue);
-        break;
-      case CLOCKWISE:
-        printf("Turn clockwise %f degrees\n", instructions[i].instructionValue);
-        break;
-      case COUNTERCLOCKWISE:
-        printf("Turn counterclockwise %f degrees\n", instructions[i].instructionValue);
-        break;
-      case STOP:
-        printf("Stop\n");
-        break;
-      default:
-        printf("Unknown instruction type\n");
-        break;
-    }
-  }
 }
 /* USER CODE END 0 */
 
@@ -367,7 +309,7 @@ int main(void)
   NavigationTaskHandle = osThreadNew(StartNavigationTask, NULL, &NavigationTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  vTaskSuspend(NavigationTaskHandle);
+//  vTaskSuspend(NavigationTaskHandle);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
@@ -678,7 +620,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
       // Prepare to receive the next character
       HAL_UART_Receive_DMA(&huart2, uart2_buffer, 11);
 
-      xTaskResumeFromISR(NavigationTaskHandle);
+      // Notify the StartNavigationTask
+      vTaskNotifyGiveFromISR(NavigationTaskHandle, pdFALSE);
+
+//      xTaskResumeFromISR(NavigationTaskHandle);
 
 	}
 }
@@ -710,6 +655,7 @@ void StartDefaultTask(void *argument)
   HAL_UART_Receive_DMA(&huart2, uart2_buffer,11);
   HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
+  vTaskSuspend(NULL);
   /* Infinite loop */
   for(;;)
   {
@@ -764,6 +710,7 @@ void UART2_Task(void *argument)
 void UART1_Task(void *argument)
 {
   /* USER CODE BEGIN UART1_Task */
+	vTaskSuspend(NULL);
   /* Infinite loop */
   for(;;)
   {
@@ -811,6 +758,7 @@ void TempTask(void *argument)
   for(;;)
   {
     osDelay(1);
+    vTaskSuspend(NULL);
   }
   /* USER CODE END TempTask */
 }
@@ -828,19 +776,23 @@ void StartNavigationTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  if (newInstruction.startDelimiter == START_DELIMITER && newInstruction.endDelimiter == END_DELIMITER)
-		{
-		  targetX = newInstruction.xCoord;
-		  targetY = newInstruction.yCoord;
-		  targetMeasurements = *(SensorMeasurements*)&newInstruction.sensorControl;
-		  printf("Received message with x: %f, y: %f\n", targetX, targetY);
-		  navigationInstruction instructions[INSTRUCTION_BUFFER_SIZE];
-		  uint8_t instructionCnt = calculatePath(instructions);
-		  transmitInstructions(instructions, instructionCnt);
-		  printSensorMeasurements(targetMeasurements);
-		  printf("Received message with x: %f, y: %f\n", targetX, targetY);
-		}
-		vTaskSuspend(NULL);
+    uint32_t ulNotificationValue;
+    BaseType_t xResult = xTaskNotifyWait( pdFALSE, 0, &ulNotificationValue, portMAX_DELAY );
+
+    if( xResult == pdPASS )
+    {
+      /* A notification was received. */
+      if (newInstruction.startDelimiter == START_DELIMITER && newInstruction.endDelimiter == END_DELIMITER)
+      {
+        targetX = newInstruction.xCoord;
+        targetY = newInstruction.yCoord;
+        memcpy(&targetMeasurements, &newInstruction.sensorControl, sizeof(targetMeasurements));
+        navigationInstruction instructions[INSTRUCTION_BUFFER_SIZE];
+        uint8_t instructionCnt = calculatePath(instructions);
+        transmitInstructions(instructions, instructionCnt);
+//        printSensorMeasurements(targetMeasurements);
+      } 
+    }
   }
   /* USER CODE END StartNavigationTask */
 }

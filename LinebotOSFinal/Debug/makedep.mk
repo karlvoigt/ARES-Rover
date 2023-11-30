@@ -50,13 +50,21 @@ main.c
 
 memmap.c
 
+Tasks\AccTask.c
+
 Tasks\ADCTask.c
 
+Tasks\AresTask.c
+
 Tasks\GyroTask.c
+
+Tasks\IPS_Task.c
 
 Tasks\LineFollowerDirectTask.c
 
 Tasks\LineFollowerSpeedTask.c
+
+Tasks\MotionCommands.c
 
 Tasks\MotionTask.c
 
@@ -69,6 +77,8 @@ Tasks\OledMenuTask.c
 Tasks\RGBTask.c
 
 Tasks\StartupTask.c
+
+Tasks\TemplateTask.c
 
 Tasks\TerminalTask.c
 
