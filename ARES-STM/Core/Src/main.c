@@ -163,6 +163,33 @@ uint8_t receiveInstructions(uint8_t* data, uint16_t dataLength);
 void printInstructions(navigationInstruction* instructions, uint16_t numInstructions);
 uint8_t calculatePath(navigationInstruction* instructions);
 
+void Toggle_LED(void) {
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);
+}
+void Enter_Stop2_Mode(void) {
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
+
+    // Enter Stop 2 mode
+    HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    if (GPIO_Pin == GPIO_PIN_4) {
+        // This function will be called by the HAL interrupt handler which should clear the pending bit
+        // Perform tasks upon EXTI interrupt from PA4
+        // For example, signaling a task or setting a flag
+
+        SystemClock_Config();
+
+        // Set a flag to indicate that a wakeup event has occurred
+        justWokenUpFromStop2 = 1;
+
+        // Re-enable interrupts if they were disabled before entering low-power mode
+        Enable_Wanted_Interrupts();
+
+    }
+}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -656,10 +683,12 @@ void StartDefaultTask(void *argument)
   HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
   vTaskSuspend(NULL);
+  Enter_Stop2_Mode();
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	Toggle_LED();
+    osDelay(500);
   }
   /* USER CODE END 5 */
 }
