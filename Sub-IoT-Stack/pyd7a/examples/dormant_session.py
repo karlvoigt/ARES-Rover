@@ -42,13 +42,14 @@ from modem.modem import Modem
 # This dormant session has a timeout of 5 minutes and will write file 0x42 (which is not yet defined in most devices but should raise an error visible in RTTLog)
 from util.logger import configure_default_logger
 
+cnt = 0
 
 def received_command_callback(cmd):
   global addressee_id, try_dormant_session
   try:
     logging.info("gotten message {}".format(cmd))
     addressee_id = cmd.interface_status.operand.interface_status.addressee.id
-    try_dormant_session = True
+    if (addressee_id==4050197526414295087): try_dormant_session = True
   except:
     return
 
@@ -56,12 +57,14 @@ def rebooted_callback(cmd):
   logging.info("rebooted with reason: {}".format(cmd))
 
 def send_dormant_session():
-  global once, addressee_id, try_dormant_session, modem
-  try_dormant_session = False
-  if once and (addressee_id != 0):
+  global once, addressee_id, try_dormant_session, modem, cnt
+  try_dormant_session = False 
+  logging.info("Sending dormant session to UID {}".format(addressee_id))
+  if (addressee_id == 4050197526414295087):
     logging.info("transmitting the dormant session")
-    once = False
-    data = [0]
+    # once = False
+    data = [cnt]
+    cnt += 1
 
     cmd = Command.create_with_write_file_action(
       file_id=0x42,
@@ -96,20 +99,21 @@ configure_default_logger(config.verbose)
 
 modem = Modem(config.device, config.rate, unsolicited_response_received_callback=received_command_callback, rebooted_callback=rebooted_callback)
 modem.connect()
-once = True
+once = False
 
 if config.uid is not None:
   try_dormant_session = True
   addressee_id = int(config.uid, 16)
 else:
   try_dormant_session = False
-  addressee_id = 0
+  addressee_id = 4050197526414295087
 
 send_dormant_session()
 
 try:
   while True:
     if try_dormant_session:
+      logging.info("waiting for the next message.")
       send_dormant_session()
     time.sleep(0.1)
     pass

@@ -29,6 +29,7 @@
 #include "hwleds.h"
 #include "hwsystem.h"
 #include "hwlcd.h"
+#include "hwuart.h"
 
 #include "scheduler.h"
 #include "timer.h"
@@ -55,7 +56,12 @@
 
 #define SENSOR_FILE_ID           0x42
 #define SENSOR_FILE_SIZE         3
-#define SENSOR_INTERVAL_SEC	TIMER_TICKS_PER_SEC * 30
+#define SENSOR_INTERVAL_SEC	TIMER_TICKS_PER_SEC * 2
+
+#define UART_PORT_IDX           0       // Adjust based on your hardware setup
+#define UART_BAUDRATE           115200  // Adjust based on your requirements
+#define UART_PINS               0       // Adjust based on your hardware setup
+#define DATA_BUFFER_SIZE        sizeof(STM32ToDash7Message)      // Adjust based on expected data size
 
 #define SENSOR_FILE_TEMPERATURE_OFFSET 0
 #define SENSOR_FILE_LED_OFFSET 2
@@ -88,9 +94,11 @@ static alp_interface_config_d7ap_t itf_config = (alp_interface_config_d7ap_t){
 };
 
 static uint8_t led_status = 0;
+uart_handle_t* uart_handle;
 
 void execute_sensor_measurement()
 {
+  uart_send_string(uart_handle, "executing sensor measurement\r\n");
   log_print_string("executing sensor measurement");
   // first get the sensor reading ...
   int16_t temperature = 0; // in decicelsius. When there is no sensor, we just transmit 0 degrees
@@ -150,6 +158,7 @@ void on_alp_command_result_cb(alp_command_t *alp_command, alp_interface_status_t
 
 static void file_modified_callback(uint8_t file_id)
 {
+    uart_send_string(uart_handle, "file modified\r\n");
     log_print_string("file modified callback");
     uint32_t length = 1;
     d7ap_fs_read_file(SENSOR_FILE_ID, SENSOR_FILE_LED_OFFSET, &led_status, &length, ROOT_AUTH);
@@ -195,6 +204,20 @@ void bootstrap()
 
     // activate low power listening
     d7ap_fs_write_dll_conf_active_access_class(0x11);
+
+    uart_handle = uart_init(UART_PORT_IDX, UART_BAUDRATE, UART_PINS);
+    if(uart_handle == NULL) {
+        // Initialization failed, handle the error
+    }
+
+    bool enabled = uart_enable(uart_handle);
+    if(!enabled) {
+        // Enabling UART failed, handle the error
+    }
+
+    // Send a startup message over UART
+    uart_send_string(uart_handle, "UART Initialized Successfully\r\n");
+
 
 #if defined USE_HTS221
     hts221_handle = i2c_init(0, 0, 100000, true);

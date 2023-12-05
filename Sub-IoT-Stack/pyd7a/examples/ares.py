@@ -24,7 +24,7 @@ import logging
 import sys
 import time
 
-from Sub-IoT-Stack.pyd7a.examples.dormant_session import send_dormant_session
+#from examples.dormant_session import send_dormant_session
 
 from d7a.alp.command import Command
 from d7a.alp.interface import InterfaceType
@@ -57,16 +57,17 @@ def received_command_callback(cmd):
 def rebooted_callback(cmd):
   logging.info("rebooted with reason: {}".format(cmd))
 
-def send_instruction ():
+def send_dormant_session():
   global once, addressee_id, try_dormant_session, modem
   try_dormant_session = False
-  if once and (addressee_id != 0):
+  # addressee_id = 4050197526414295087 #The uid of the end node
+  if once and (addressee_id == 4050197526414295087):
     logging.info("sending instruction to the end node")
     once = False
-    data = [0]
+    data = [10,20,30,40,50,60,70,80,90,100]
 
     cmd = Command.create_with_write_file_action(
-      file_id=0x50,
+      file_id=0x62,
       offset=0,
       data=data,
       interface_type=InterfaceType.D7ASP,
@@ -112,7 +113,7 @@ send_dormant_session()
 try:
   while True:
     if try_dormant_session:
-      send_instruction()
+      send_dormant_session()
     time.sleep(0.1)
     pass
 except KeyboardInterrupt:

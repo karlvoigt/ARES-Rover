@@ -8,13 +8,11 @@
 #ifndef INC_CUSTOMPROTOCOL_H_
 #define INC_CUSTOMPROTOCOL_H_
 
+#include <stdint.h>
+
 #define START_DELIMITER 0x5B    // '['
 #define END_DELIMITER   0x5D    // ']'
 #define CUSTOM_MESSAGE_SIZE 10  // Expected size of CustomMessage
-
-// #include <stdio.h>
-// #include <stdlib.h>
-
 
 typedef enum {
     SENSOR_TYPE_TEMPERATURE = 0x1,
@@ -71,7 +69,11 @@ typedef struct __attribute__((packed)) {
     float xCoord;
     float yCoord;
     float angle; // In degrees
-    uint16_t sensorData; // Variable length, as defined by sensors
+    uint16_t temperature; // Variable length, as defined by sensors
+    uint16_t humidity;
+    uint16_t light;
+    uint16_t ir;
+    uint32_t timestamp;
     uint8_t battery;
     uint8_t endDelimiter;
 } STM32ToDash7Message;
@@ -106,6 +108,5 @@ typedef union {
     Dash7ToSTM32Message d7ToStm;
     BLERoverMessage ble;
 } MessageUnion;
-
 
 #endif /* INC_CUSTOMPROTOCOL_H_ */

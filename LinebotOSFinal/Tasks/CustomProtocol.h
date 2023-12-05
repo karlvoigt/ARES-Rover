@@ -45,8 +45,9 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
     uint8_t startDelimiter;
-    uint16_t dataLength;
-    MEMS_Data* data; // Pointer to an array of MEMS_Data
+    float xCoord;
+    float yCoord;
+    float yaw;
     uint8_t endDelimiter;
 } LineBotToSTM32Message;
 

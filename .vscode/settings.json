@@ -1,6 +1,12 @@
 {
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
-        "customprotocol.h": "c"
+        "customprotocol.h": "c",
+        "drivermotor.h": "c",
+        "motiontask.h": "c",
+        "linefollowerspeedtask.h": "c",
+        "motorspeedtask.h": "c",
+        "motorpostask.h": "c",
+        "locale": "cpp"
     }
 }
