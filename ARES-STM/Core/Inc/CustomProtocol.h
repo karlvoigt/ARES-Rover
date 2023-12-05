@@ -116,9 +116,9 @@ void sendLightSensorData(uint16_t sensorData);
 void parseUARTMessage(MessageUnion* message, MessageType messageType, uint8_t* data);
 
 // Function to receive and decode instructions
-uint8_t receiveInstructions(uint8_t* data, uint16_t dataLength);
+//uint8_t receiveInstructions(uint8_t* data, uint16_t dataLength);
 
 // Function to print the instructions
-void printInstructions(navigationInstruction* instructions, uint16_t numInstructions);
+//void printInstructions(navigationInstruction* instructions, uint16_t numInstructions);
 
 #endif /* INC_CUSTOMPROTOCOL_H_ */

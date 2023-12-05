@@ -129,6 +129,7 @@ float targetAngle = 0;
 float plannedAngle = 0;
 SensorMeasurements targetMeasurements;
 Dash7ToSTM32Message newInstruction;
+uint8_t justWokenUpFromStop2;
 
 /* USER CODE END PV */
 
@@ -183,9 +184,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
         // Set a flag to indicate that a wakeup event has occurred
         justWokenUpFromStop2 = 1;
-
-        // Re-enable interrupts if they were disabled before entering low-power mode
-        Enable_Wanted_Interrupts();
 
     }
 }
@@ -247,7 +245,7 @@ void transmitInstructions(navigationInstruction* instructions, uint8_t instructi
     }
     transmission[instructionCnt*sizeof(navigationInstruction) + 2] = END_DELIMITER;
     HAL_UART_Transmit(&huart2, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
-    receiveInstructions(transmission, instructionCnt*sizeof(navigationInstruction) + 3);
+//    receiveInstructions(transmission, instructionCnt*sizeof(navigationInstruction) + 3);
 }
 /* USER CODE END 0 */
 
