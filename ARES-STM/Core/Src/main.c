@@ -52,13 +52,14 @@ I2C_HandleTypeDef hi2c1;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart2_rx;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityRealtime,
 };
 /* Definitions for UART2Task */
 osThreadId_t UART2TaskHandle;
@@ -81,6 +82,20 @@ const osThreadAttr_t LightSensor_Tas_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal1,
 };
+/* Definitions for Temp_Task */
+osThreadId_t Temp_TaskHandle;
+const osThreadAttr_t Temp_Task_attributes = {
+  .name = "Temp_Task",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
+/* Definitions for NavigationTask */
+osThreadId_t NavigationTaskHandle;
+const osThreadAttr_t NavigationTask_attributes = {
+  .name = "NavigationTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal2,
+};
 /* Definitions for uart1Queue */
 osMessageQueueId_t uart1QueueHandle;
 const osMessageQueueAttr_t uart1Queue_attributes = {
@@ -93,7 +108,7 @@ const osMessageQueueAttr_t uart2Queue_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-uint8_t uart1_buffer[1], uart2_buffer[1];
+uint8_t uart1_buffer[1], uart2_buffer[sizeof(Dash7ToSTM32Message)];
 uint8_t uart1_accumulate_buffer[UART_BUFFER_SIZE],uart2_accumulate_buffer[UART_BUFFER_SIZE];;
 uint8_t uart1_accumulate_pos = 0;
 uint8_t uart2_accumulate_pos = 0;
@@ -113,6 +128,7 @@ float targetY = 0;
 float targetAngle = 0;
 float plannedAngle = 0;
 SensorMeasurements targetMeasurements;
+Dash7ToSTM32Message newInstruction;
 
 /* USER CODE END PV */
 
@@ -127,6 +143,8 @@ void StartDefaultTask(void *argument);
 void UART2_Task(void *argument);
 void UART1_Task(void *argument);
 void LightSensorTask(void *argument);
+void TempTask(void *argument);
+void StartNavigationTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -201,66 +219,8 @@ void transmitInstructions(navigationInstruction* instructions, uint8_t instructi
         memcpy(&transmission[3 + i*sizeof(navigationInstruction)], &instructions[i].instructionValue, 4);
     }
     transmission[instructionCnt*sizeof(navigationInstruction) + 2] = END_DELIMITER;
-    // HAL_UART_Transmit(&huart2, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart2, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
     receiveInstructions(transmission, instructionCnt*sizeof(navigationInstruction) + 3);
-}
-
-// Function to receive and decode instructions
-uint8_t receiveInstructions(uint8_t* data, uint16_t dataLength) {
-    // Check the start and end delimiters
-    if (data[0] != START_DELIMITER || data[dataLength - 1] != END_DELIMITER) {
-        return 0; // Invalid data
-    }
-
-    // Calculate the number of instructions
-    uint16_t numInstructions = (dataLength - 2) / sizeof(navigationInstruction);
-    //check that the calculated number of instructions matches the transmitted number
-    if (numInstructions != data[1]) {
-        return 0; // Invalid data
-    }
-    navigationInstruction instructions[numInstructions];
-
-    // Decode the instructions
-    for (uint16_t i = 0; i < numInstructions; i++) {
-        memcpy(&instructions[i], &data[i * sizeof(navigationInstruction) + 1], sizeof(navigationInstruction));
-    }
-
-    // Print the instructions
-    printInstructions(instructions, numInstructions);
-    return numInstructions;
-}
-
-// Function to print the instructions
-void printInstructions(navigationInstruction* instructions, uint16_t numInstructions) {
-  for (uint16_t i = 0; i < numInstructions; i++) {
-    printf("Instruction %d: ", i);
-    switch (instructions[i].instructionType) {
-      case LEFT:
-        printf("Turn left and drive %f mm\n", instructions[i].instructionValue);
-        break;
-      case RIGHT:
-        printf("Turn right and drive %f mm\n", instructions[i].instructionValue);
-        break;
-      case FORWARD:
-        printf("Drive %f mm forwards\n", instructions[i].instructionValue);
-        break;
-      case BACKWARD:
-        printf("Drive %f mm backwards\n", instructions[i].instructionValue);
-        break;
-      case CLOCKWISE:
-        printf("Turn clockwise %f degrees\n", instructions[i].instructionValue);
-        break;
-      case COUNTERCLOCKWISE:
-        printf("Turn counterclockwise %f degrees\n", instructions[i].instructionValue);
-        break;
-      case STOP:
-        printf("Stop\n");
-        break;
-      default:
-        printf("Unknown instruction type\n");
-        break;
-    }
-  }
 }
 /* USER CODE END 0 */
 
@@ -297,8 +257,8 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
+//  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+//  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
 
   /* USER CODE END 2 */
@@ -342,7 +302,14 @@ int main(void)
   /* creation of LightSensor_Tas */
   LightSensor_TasHandle = osThreadNew(LightSensorTask, NULL, &LightSensor_Tas_attributes);
 
+  /* creation of Temp_Task */
+  Temp_TaskHandle = osThreadNew(TempTask, NULL, &Temp_Task_attributes);
+
+  /* creation of NavigationTask */
+  NavigationTaskHandle = osThreadNew(StartNavigationTask, NULL, &NavigationTask_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
+//  vTaskSuspend(NavigationTaskHandle);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
@@ -550,6 +517,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+  /* DMA1_Channel6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
 
 }
 
@@ -637,24 +607,23 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	// }
 	else if (huart->Instance == USART2)
 	{
-		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-		xQueueSendFromISR(uart2QueueHandle, uart2_buffer, NULL);
-=======
 //		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-      newInstruction.startDelimiter = uart2_buffer[11];
+      newInstruction.startDelimiter = uart2_buffer[0];
 
-      memcpy(&newInstruction.xCoord, &uart2_buffer[0], sizeof(float));
-      memcpy(&newInstruction.yCoord, &uart2_buffer[4], sizeof(float));
+      memcpy(&newInstruction.xCoord, &uart2_buffer[1], sizeof(float));
+      memcpy(&newInstruction.yCoord, &uart2_buffer[5], sizeof(float));
 
-      newInstruction.sensorControl = uart2_buffer[8];
-      newInstruction.endDelimiter = uart2_buffer[9];
+      newInstruction.sensorControl = uart2_buffer[9];
+      newInstruction.endDelimiter = uart2_buffer[10];
 //		xQueueSendFromISR(uart2QueueHandle, &msg, NULL);
 
-		xTaskResumeFromISR(navigationTaskHandle);
->>>>>>> Stashed changes
+      // Prepare to receive the next character
+      HAL_UART_Receive_DMA(&huart2, uart2_buffer, 11);
 
-		// Prepare to receive the next character
-//		HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
+      // Notify the StartNavigationTask
+      vTaskNotifyGiveFromISR(NavigationTaskHandle, pdFALSE);
+
+//      xTaskResumeFromISR(NavigationTaskHandle);
 
 	}
 }
@@ -682,13 +651,11 @@ void printSensorMeasurements(SensorMeasurements measurements) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-<<<<<<< Updated upstream
-=======
-   HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-//  HAL_UART_Receive_DMA(&huart2, uart2_buffer, sizeof(uart2_buffer));
+//  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
+  HAL_UART_Receive_DMA(&huart2, uart2_buffer,11);
   HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
   printf("Setup complete\n");
->>>>>>> Stashed changes
+  vTaskSuspend(NULL);
   /* Infinite loop */
   for(;;)
   {
@@ -707,31 +674,28 @@ void StartDefaultTask(void *argument)
 void UART2_Task(void *argument)
 {
   /* USER CODE BEGIN UART2_Task */
-<<<<<<< Updated upstream
-	Dash7ToSTM32Message receivedMessage;
-=======
 //	uint8_t data[sizeof(Dash7ToSTM32Message)];
-	Dash7ToSTM32Message msg;
+//	Dash7ToSTM32Message msg;
 //	MessageUnion receivedMessage;
->>>>>>> Stashed changes
   /* Infinite loop */
   for(;;)
   {
-    if (xQueueReceive(uart2QueueHandle, &receivedMessage, portMAX_DELAY) == pdPASS)
-    {
-      //Check for message structure
-      if (receivedMessage.startDelimiter != START_DELIMITER || receivedMessage.endDelimiter != END_DELIMITER)
-      {
-        // Invalid message structure
-        continue;
-      } else {
-        targetX = receivedMessage.xCoord;
-        targetY = receivedMessage.yCoord;
-        targetMeasurements = *(SensorMeasurements*)&receivedMessage.sensorControl;
-        printSensorMeasurements(targetMeasurements);
-        printf("Received message with x: %f, y: %f\n", targetX, targetY);
-      }
-    }
+//    if (xQueueReceive(uart2QueueHandle, &receivedMessage, portMAX_DELAY) == pdPASS)
+//    {
+//      //Check for message structure
+//      if (receivedMessage.startDelimiter != START_DELIMITER || receivedMessage.endDelimiter != END_DELIMITER)
+//      {
+//        // Invalid message structure
+//        continue;
+//      } else {
+//        targetX = receivedMessage.xCoord;
+//        targetY = receivedMessage.yCoord;
+//        targetMeasurements = *(SensorMeasurements*)&receivedMessage.sensorControl;
+//        printSensorMeasurements(targetMeasurements);
+//        printf("Received message with x: %f, y: %f\n", targetX, targetY);
+//      }
+//    }
+	  osDelay(10000);
   }
   /* USER CODE END UART2_Task */
 }
@@ -746,6 +710,7 @@ void UART2_Task(void *argument)
 void UART1_Task(void *argument)
 {
   /* USER CODE BEGIN UART1_Task */
+	vTaskSuspend(NULL);
   /* Infinite loop */
   for(;;)
   {
@@ -779,8 +744,6 @@ void LightSensorTask(void *argument)
   /* USER CODE END LightSensorTask */
 }
 
-<<<<<<< Updated upstream
-=======
 /* USER CODE BEGIN Header_TempTask */
 /**
 * @brief Function implementing the Temp_Task thread.
@@ -795,6 +758,7 @@ void TempTask(void *argument)
   for(;;)
   {
     osDelay(1);
+    vTaskSuspend(NULL);
   }
   /* USER CODE END TempTask */
 }
@@ -812,23 +776,27 @@ void StartNavigationTask(void *argument)
   /* Infinite loop */
   for(;;)
   {
-	  if (newInstruction.startDelimiter == START_DELIMITER && newInstruction.endDelimiter == END_DELIMITER)
-		{
-		  targetX = newInstruction.xCoord;
-		  targetY = newInstruction.yCoord;
-		  targetMeasurements = *(SensorMeasurements*)&newInstruction.sensorControl;
-		  printSensorMeasurements(targetMeasurements);
-		  printf("Received message with x: %f, y: %f\n", targetX, targetY);
-      navigationInstruction instructions[INSTRUCTION_BUFFER_SIZE];
-      uint8_t instructionCnt = calculatePath(instructions);
-      transmitInstructions(instructions, instructionCnt);
-		}
-		vTaskSuspend(NULL);
+    uint32_t ulNotificationValue;
+    BaseType_t xResult = xTaskNotifyWait( pdFALSE, 0, &ulNotificationValue, portMAX_DELAY );
+
+    if( xResult == pdPASS )
+    {
+      /* A notification was received. */
+      if (newInstruction.startDelimiter == START_DELIMITER && newInstruction.endDelimiter == END_DELIMITER)
+      {
+        targetX = newInstruction.xCoord;
+        targetY = newInstruction.yCoord;
+        memcpy(&targetMeasurements, &newInstruction.sensorControl, sizeof(targetMeasurements));
+        navigationInstruction instructions[INSTRUCTION_BUFFER_SIZE];
+        uint8_t instructionCnt = calculatePath(instructions);
+        transmitInstructions(instructions, instructionCnt);
+//        printSensorMeasurements(targetMeasurements);
+      } 
+    }
   }
   /* USER CODE END StartNavigationTask */
 }
 
->>>>>>> Stashed changes
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM6 interrupt took place, inside

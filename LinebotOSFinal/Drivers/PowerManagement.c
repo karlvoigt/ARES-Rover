@@ -4,6 +4,13 @@
  * Created: 7/11/2023 14:36:16
  *  Author: maxco
  */ 
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+#include "trace.h"
+
 #include "PowerManagement.h"
 #include <avr/sleep.h>
 #include <avr/interrupt.h>

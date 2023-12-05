@@ -29,20 +29,20 @@
     <eraseonlaunchrule>0</eraseonlaunchrule>
     <EraseKey />
     <AsfFrameworkConfig>
-      <framework-data>
+      <framework-data xmlns="">
         <options />
         <configurations />
         <files />
         <documentation help="" />
         <offline-documentation help="" />
         <dependencies>
-          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.44.1" />
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.40.0" />
         </dependencies>
       </framework-data>
     </AsfFrameworkConfig>
     <avrtool>com.atmel.avrdbg.tool.atmelice</avrtool>
     <avrtoolinterface>PDI</avrtoolinterface>
-    <avrtoolserialnumber>J42700010044</avrtoolserialnumber>
+    <avrtoolserialnumber>J42700010251</avrtoolserialnumber>
     <avrdeviceexpectedsignature>0x1E9845</avrdeviceexpectedsignature>
     <com_atmel_avrdbg_tool_avrdragon>
       <ToolOptions>
@@ -58,8 +58,7 @@
       <ToolOptions>
         <InterfaceProperties>
         </InterfaceProperties>
-        <InterfaceName>
-        </InterfaceName>
+        <InterfaceName>PDI</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.simulator</ToolType>
       <ToolNumber>
@@ -74,7 +73,7 @@
         <InterfaceName>PDI</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.atmelice</ToolType>
-      <ToolNumber>J42700010044</ToolNumber>
+      <ToolNumber>J42700010251</ToolNumber>
       <ToolName>Atmel-ICE</ToolName>
     </com_atmel_avrdbg_tool_atmelice>
     <avrtoolinterfaceclock>4000000</avrtoolinterfaceclock>
@@ -329,12 +328,27 @@
     <Compile Include="memmap.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Tasks\AccTask.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\AccTask.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Tasks\ADCTask.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\ADCTask.h">
       <SubType>compile</SubType>
       <Link>Tasks\ADCTask.h</Link>
+    </Compile>
+    <Compile Include="Tasks\AresTask.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\AresTask.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\CustomProtocol.h">
+      <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\GyroTask.c">
       <SubType>compile</SubType>
@@ -343,6 +357,12 @@
     <Compile Include="Tasks\GyroTask.h">
       <SubType>compile</SubType>
       <Link>Tasks\GyroTask.h</Link>
+    </Compile>
+    <Compile Include="Tasks\IPS_Task.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\IPS_Task.h">
+      <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\LineFollowerDirectTask.c">
       <SubType>compile</SubType>
@@ -358,6 +378,12 @@
     <Compile Include="Tasks\LineFollowerSpeedTask.h">
       <SubType>compile</SubType>
       <Link>Tasks\LineFollowerSpeedTask.h</Link>
+    </Compile>
+    <Compile Include="Tasks\MotionCommands.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\MotionCommands.h">
+      <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\MotionTask.c">
       <SubType>compile</SubType>
@@ -401,6 +427,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\StartupTask.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\TemplateTask.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\TemplateTask.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\TerminalTask.c">

@@ -64,16 +64,21 @@ C_SRCS +=  \
 ../hooks.c \
 ../main.c \
 ../memmap.c \
+../Tasks/AccTask.c \
 ../Tasks/ADCTask.c \
+../Tasks/AresTask.c \
 ../Tasks/GyroTask.c \
+../Tasks/IPS_Task.c \
 ../Tasks/LineFollowerDirectTask.c \
 ../Tasks/LineFollowerSpeedTask.c \
+../Tasks/MotionCommands.c \
 ../Tasks/MotionTask.c \
 ../Tasks/MotorPosTask.c \
 ../Tasks/MotorSpeedTask.c \
 ../Tasks/OledMenuTask.c \
 ../Tasks/RGBTask.c \
 ../Tasks/StartupTask.c \
+../Tasks/TemplateTask.c \
 ../Tasks/TerminalTask.c \
 ../trace.c
 
@@ -109,16 +114,21 @@ FreeRTOS/timers.o \
 hooks.o \
 main.o \
 memmap.o \
+Tasks/AccTask.o \
 Tasks/ADCTask.o \
+Tasks/AresTask.o \
 Tasks/GyroTask.o \
+Tasks/IPS_Task.o \
 Tasks/LineFollowerDirectTask.o \
 Tasks/LineFollowerSpeedTask.o \
+Tasks/MotionCommands.o \
 Tasks/MotionTask.o \
 Tasks/MotorPosTask.o \
 Tasks/MotorSpeedTask.o \
 Tasks/OledMenuTask.o \
 Tasks/RGBTask.o \
 Tasks/StartupTask.o \
+Tasks/TemplateTask.o \
 Tasks/TerminalTask.o \
 trace.o
 
@@ -147,16 +157,21 @@ FreeRTOS/timers.o \
 hooks.o \
 main.o \
 memmap.o \
+Tasks/AccTask.o \
 Tasks/ADCTask.o \
+Tasks/AresTask.o \
 Tasks/GyroTask.o \
+Tasks/IPS_Task.o \
 Tasks/LineFollowerDirectTask.o \
 Tasks/LineFollowerSpeedTask.o \
+Tasks/MotionCommands.o \
 Tasks/MotionTask.o \
 Tasks/MotorPosTask.o \
 Tasks/MotorSpeedTask.o \
 Tasks/OledMenuTask.o \
 Tasks/RGBTask.o \
 Tasks/StartupTask.o \
+Tasks/TemplateTask.o \
 Tasks/TerminalTask.o \
 trace.o
 
@@ -185,16 +200,21 @@ FreeRTOS/timers.d \
 hooks.d \
 main.d \
 memmap.d \
+Tasks/AccTask.d \
 Tasks/ADCTask.d \
+Tasks/AresTask.d \
 Tasks/GyroTask.d \
+Tasks/IPS_Task.d \
 Tasks/LineFollowerDirectTask.d \
 Tasks/LineFollowerSpeedTask.d \
+Tasks/MotionCommands.d \
 Tasks/MotionTask.d \
 Tasks/MotorPosTask.d \
 Tasks/MotorSpeedTask.d \
 Tasks/OledMenuTask.d \
 Tasks/RGBTask.d \
 Tasks/StartupTask.d \
+Tasks/TemplateTask.d \
 Tasks/TerminalTask.d \
 trace.d
 
@@ -223,16 +243,21 @@ FreeRTOS/timers.d \
 hooks.d \
 main.d \
 memmap.d \
+Tasks/AccTask.d \
 Tasks/ADCTask.d \
+Tasks/AresTask.d \
 Tasks/GyroTask.d \
+Tasks/IPS_Task.d \
 Tasks/LineFollowerDirectTask.d \
 Tasks/LineFollowerSpeedTask.d \
+Tasks/MotionCommands.d \
 Tasks/MotionTask.d \
 Tasks/MotorPosTask.d \
 Tasks/MotorSpeedTask.d \
 Tasks/OledMenuTask.d \
 Tasks/RGBTask.d \
 Tasks/StartupTask.d \
+Tasks/TemplateTask.d \
 Tasks/TerminalTask.d \
 trace.d
 
@@ -418,6 +443,13 @@ FreeRTOS/timers.o: ../FreeRTOS/timers.c
 	@echo Finished building: $<
 	
 
+Tasks/AccTask.o: ../Tasks/AccTask.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
 Tasks/ADCTask.o: ../Tasks/ADCTask.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
@@ -425,7 +457,21 @@ Tasks/ADCTask.o: ../Tasks/ADCTask.c
 	@echo Finished building: $<
 	
 
+Tasks/AresTask.o: ../Tasks/AresTask.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
 Tasks/GyroTask.o: ../Tasks/GyroTask.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+Tasks/IPS_Task.o: ../Tasks/IPS_Task.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
@@ -440,6 +486,13 @@ Tasks/LineFollowerDirectTask.o: ../Tasks/LineFollowerDirectTask.c
 	
 
 Tasks/LineFollowerSpeedTask.o: ../Tasks/LineFollowerSpeedTask.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+Tasks/MotionCommands.o: ../Tasks/MotionCommands.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
@@ -482,6 +535,13 @@ Tasks/RGBTask.o: ../Tasks/RGBTask.c
 	
 
 Tasks/StartupTask.o: ../Tasks/StartupTask.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+Tasks/TemplateTask.o: ../Tasks/TemplateTask.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

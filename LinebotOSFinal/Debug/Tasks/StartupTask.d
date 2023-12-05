@@ -23,8 +23,9 @@ Tasks/StartupTask.d Tasks/StartupTask.o: ../Tasks/StartupTask.c \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\interrupt.h \
  ../Drivers/Driverpl9823.h ../Drivers/DriverAdc.h ../Drivers/DriverLed.h \
  ../Drivers/DriverMPU6050.h ../Drivers/DriverTWIMaster.h \
- ../Drivers/DriverDbgUSART.h ../Drivers/DriverAdps9960.h \
- ../Drivers/DriverOled.h ../Drivers/DriverTwiMaster.h \
+ ../Tasks/CustomProtocol.h ../Drivers/DriverDbgUSART.h \
+ ../Drivers/DriverAdps9960.h ../Drivers/DriverOled.h \
+ ../Drivers/DriverTwiMaster.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\pgmspace.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdlib.h \
@@ -35,9 +36,12 @@ Tasks/StartupTask.d Tasks/StartupTask.o: ../Tasks/StartupTask.c \
  ../Tasks/MotorPosTask.h ../Tasks/MotorSpeedTask.h ../Tasks/ADCTask.h \
  ../Tasks/LineFollowerSpeedTask.h ../Tasks/LineFollowerDirectTask.h \
  ../Tasks/RGBTask.h ../Tasks/GyroTask.h ../Tasks/TerminalTask.h \
- ../Tasks/MotionTask.h \
+ ../Tasks/MotionTask.h ../Tasks/IPS_Task.h ../FreeRTOS/queue.h \
+ ../FreeRTOS/task.h ../FreeRTOS/semphr.h ../FreeRTOS/queue.h \
+ ../Tasks/AccTask.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h
+ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h \
+ ../Tasks/CustomProtocol.h
 
 ../Tasks/StartupTask.h:
 
@@ -111,6 +115,8 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\
 
 ../Drivers/DriverTWIMaster.h:
 
+../Tasks/CustomProtocol.h:
+
 ../Drivers/DriverDbgUSART.h:
 
 ../Drivers/DriverAdps9960.h:
@@ -153,6 +159,20 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\
 
 ../Tasks/MotionTask.h:
 
+../Tasks/IPS_Task.h:
+
+../FreeRTOS/queue.h:
+
+../FreeRTOS/task.h:
+
+../FreeRTOS/semphr.h:
+
+../FreeRTOS/queue.h:
+
+../Tasks/AccTask.h:
+
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h:
+
+../Tasks/CustomProtocol.h:

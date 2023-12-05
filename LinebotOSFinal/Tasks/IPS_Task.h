@@ -16,6 +16,7 @@ void IPSGetPosition(float *PosX, float *PosY, float *PosZ);
 void IPSGetAcceleration(float *Ax, float *Ay, float *Az);
 
 // Gets the current gyroscope data in the X, Y, and Z directions
-void IPSGetGyroscope(float *Gx, float *Gy, float *Gz)
+void IPSGetGyroscope(float *Gx, float *Gy, float *Gz);
 
+void IPSGetVelocity(float *VelX, float *VelY, float *VelZ);
 #endif // IPS_TASK_H
