@@ -28,11 +28,10 @@ Tasks/AresTask.d Tasks/AresTask.o: ../Tasks/AresTask.c \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay_basic.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\math.h \
  ../Tasks/CustomProtocol.h ../Tasks/MotionCommands.h ../FreeRTOS/semphr.h \
- ../FreeRTOS/queue.h ../Drivers/DriverMotor.h \
- ../Tasks/LineFollowerSpeedTask.h ../Tasks/MotorSpeedTask.h \
- ../Tasks/MotorPosTask.h ../Tasks/ADCTask.h \
+ ../FreeRTOS/queue.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h
+ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h \
+ ../Tasks/EncoderPositioning.h ../Drivers/DriverDbgUSART.h
 
 ../Tasks/AresTask.h:
 
@@ -116,16 +115,10 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\
 
 ../FreeRTOS/queue.h:
 
-../Drivers/DriverMotor.h:
-
-../Tasks/LineFollowerSpeedTask.h:
-
-../Tasks/MotorSpeedTask.h:
-
-../Tasks/MotorPosTask.h:
-
-../Tasks/ADCTask.h:
-
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h:
+
+../Tasks/EncoderPositioning.h:
+
+../Drivers/DriverDbgUSART.h:

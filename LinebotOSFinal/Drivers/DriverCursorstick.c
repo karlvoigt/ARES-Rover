@@ -48,7 +48,7 @@ uint8_t DriverCursorStickGetFifo(TickType_t BlockTime)
 ISR (PORTB_INT0_vect)
 {
 	printf("wakey wakey");
-	DriverPowerVccAuxSet(1);
+	//DriverPowerVccAuxSet(1);
 	PMIC.CTRL |= 0b111;
 	static uint32_t LastIntTime=0;
 	uint32_t CurTime;

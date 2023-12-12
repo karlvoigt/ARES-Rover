@@ -38,10 +38,10 @@ Tasks/StartupTask.d Tasks/StartupTask.o: ../Tasks/StartupTask.c \
  ../Tasks/RGBTask.h ../Tasks/GyroTask.h ../Tasks/TerminalTask.h \
  ../Tasks/MotionTask.h ../Tasks/IPS_Task.h ../FreeRTOS/queue.h \
  ../FreeRTOS/task.h ../FreeRTOS/semphr.h ../FreeRTOS/queue.h \
- ../Tasks/AccTask.h \
+ ../Tasks/AccTask.h ../Tasks/AresTask.h ../Tasks/CustomProtocol.h \
+ ../Tasks/MotionCommands.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h \
- ../Tasks/CustomProtocol.h
+ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h
 
 ../Tasks/StartupTask.h:
 
@@ -171,8 +171,12 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\
 
 ../Tasks/AccTask.h:
 
+../Tasks/AresTask.h:
+
+../Tasks/CustomProtocol.h:
+
+../Tasks/MotionCommands.h:
+
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h:
-
-../Tasks/CustomProtocol.h:

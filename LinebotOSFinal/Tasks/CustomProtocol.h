@@ -16,8 +16,8 @@
 //#include <stdlib.h>
 #include <stdint.h>
 
-volatile uint8_t USART_RX_Queue_has_data; //Flag to indicate whether there is data in the USART queue
 volatile uint8_t USART_RX_transmission_complete; //Flag to indicate whether the USART transmission is complete
+volatile uint8_t USART_RX_Count; //Number of bytes received in the USART queue
 
 
 typedef struct __attribute__((packed)) {

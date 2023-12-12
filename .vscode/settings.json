@@ -7,6 +7,11 @@
         "linefollowerspeedtask.h": "c",
         "motorspeedtask.h": "c",
         "motorpostask.h": "c",
-        "locale": "cpp"
+        "locale": "cpp",
+        "driverpl9823.h": "c",
+        "__locale": "c",
+        "string": "c",
+        "string_view": "c",
+        "__string": "c"
     }
 }

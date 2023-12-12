@@ -48,6 +48,7 @@ C_SRCS +=  \
 ../Drivers/DriverMotor.c \
 ../Drivers/DriverMPU6050.c \
 ../Drivers/DriverOled.c \
+../Drivers/Driverpl9823Bitbang.c \
 ../Drivers/Driverpl9823USART.c \
 ../Drivers/DriverPower.c \
 ../Drivers/DriverSysClk.c \
@@ -67,6 +68,7 @@ C_SRCS +=  \
 ../Tasks/AccTask.c \
 ../Tasks/ADCTask.c \
 ../Tasks/AresTask.c \
+../Tasks/EncoderPositioning.c \
 ../Tasks/GyroTask.c \
 ../Tasks/IPS_Task.c \
 ../Tasks/LineFollowerDirectTask.c \
@@ -83,13 +85,15 @@ C_SRCS +=  \
 ../trace.c
 
 
-PREPROCESSING_SRCS += 
+PREPROCESSING_SRCS +=  \
+../Drivers/Drivepl9823Bitbang.s
 
 
 ASM_SRCS += 
 
 
 OBJS +=  \
+Drivers/Drivepl9823Bitbang.o \
 Drivers/DriverAdc.o \
 Drivers/DriverAdps9960.o \
 Drivers/DriverCursorstick.o \
@@ -98,6 +102,7 @@ Drivers/DriverLed.o \
 Drivers/DriverMotor.o \
 Drivers/DriverMPU6050.o \
 Drivers/DriverOled.o \
+Drivers/Driverpl9823Bitbang.o \
 Drivers/Driverpl9823USART.o \
 Drivers/DriverPower.o \
 Drivers/DriverSysClk.o \
@@ -117,6 +122,7 @@ memmap.o \
 Tasks/AccTask.o \
 Tasks/ADCTask.o \
 Tasks/AresTask.o \
+Tasks/EncoderPositioning.o \
 Tasks/GyroTask.o \
 Tasks/IPS_Task.o \
 Tasks/LineFollowerDirectTask.o \
@@ -133,6 +139,7 @@ Tasks/TerminalTask.o \
 trace.o
 
 OBJS_AS_ARGS +=  \
+Drivers/Drivepl9823Bitbang.o \
 Drivers/DriverAdc.o \
 Drivers/DriverAdps9960.o \
 Drivers/DriverCursorstick.o \
@@ -141,6 +148,7 @@ Drivers/DriverLed.o \
 Drivers/DriverMotor.o \
 Drivers/DriverMPU6050.o \
 Drivers/DriverOled.o \
+Drivers/Driverpl9823Bitbang.o \
 Drivers/Driverpl9823USART.o \
 Drivers/DriverPower.o \
 Drivers/DriverSysClk.o \
@@ -160,6 +168,7 @@ memmap.o \
 Tasks/AccTask.o \
 Tasks/ADCTask.o \
 Tasks/AresTask.o \
+Tasks/EncoderPositioning.o \
 Tasks/GyroTask.o \
 Tasks/IPS_Task.o \
 Tasks/LineFollowerDirectTask.o \
@@ -176,6 +185,7 @@ Tasks/TerminalTask.o \
 trace.o
 
 C_DEPS +=  \
+Drivers/Drivepl9823Bitbang.d \
 Drivers/DriverAdc.d \
 Drivers/DriverAdps9960.d \
 Drivers/DriverCursorstick.d \
@@ -184,6 +194,7 @@ Drivers/DriverLed.d \
 Drivers/DriverMotor.d \
 Drivers/DriverMPU6050.d \
 Drivers/DriverOled.d \
+Drivers/Driverpl9823Bitbang.d \
 Drivers/Driverpl9823USART.d \
 Drivers/DriverPower.d \
 Drivers/DriverSysClk.d \
@@ -203,6 +214,7 @@ memmap.d \
 Tasks/AccTask.d \
 Tasks/ADCTask.d \
 Tasks/AresTask.d \
+Tasks/EncoderPositioning.d \
 Tasks/GyroTask.d \
 Tasks/IPS_Task.d \
 Tasks/LineFollowerDirectTask.d \
@@ -219,6 +231,7 @@ Tasks/TerminalTask.d \
 trace.d
 
 C_DEPS_AS_ARGS +=  \
+Drivers/Drivepl9823Bitbang.d \
 Drivers/DriverAdc.d \
 Drivers/DriverAdps9960.d \
 Drivers/DriverCursorstick.d \
@@ -227,6 +240,7 @@ Drivers/DriverLed.d \
 Drivers/DriverMotor.d \
 Drivers/DriverMPU6050.d \
 Drivers/DriverOled.d \
+Drivers/Driverpl9823Bitbang.d \
 Drivers/Driverpl9823USART.d \
 Drivers/DriverPower.d \
 Drivers/DriverSysClk.d \
@@ -246,6 +260,7 @@ memmap.d \
 Tasks/AccTask.d \
 Tasks/ADCTask.d \
 Tasks/AresTask.d \
+Tasks/EncoderPositioning.d \
 Tasks/GyroTask.d \
 Tasks/IPS_Task.d \
 Tasks/LineFollowerDirectTask.d \
@@ -325,6 +340,13 @@ Drivers/DriverMPU6050.o: ../Drivers/DriverMPU6050.c
 	
 
 Drivers/DriverOled.o: ../Drivers/DriverOled.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+Drivers/Driverpl9823Bitbang.o: ../Drivers/Driverpl9823Bitbang.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
@@ -464,6 +486,13 @@ Tasks/AresTask.o: ../Tasks/AresTask.c
 	@echo Finished building: $<
 	
 
+Tasks/EncoderPositioning.o: ../Tasks/EncoderPositioning.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include" -I".." -I"../Drivers" -I"../FreeRTOS" -I"../Tasks"  -O2 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g2 -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
 Tasks/GyroTask.o: ../Tasks/GyroTask.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
@@ -570,6 +599,13 @@ Tasks/TerminalTask.o: ../Tasks/TerminalTask.c
 
 
 # AVR32/GNU Assembler
+Drivers/Drivepl9823Bitbang.o: ../Drivers/Drivepl9823Bitbang.s
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU Assembler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE) -Wa,-gdwarf2 -x assembler-with-cpp -c -mmcu=atxmega384c3 -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\gcc\dev\atxmega384c3" -I "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include"  -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)" -Wa,-g   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
 
 
 

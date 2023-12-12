@@ -61,14 +61,14 @@ def send_dormant_session():
   try_dormant_session = False 
   logging.info("Sending dormant session to UID {}".format(addressee_id))
   if (addressee_id == 4050197526414295087):
-    logging.info("transmitting the dormant session")
+    logging.info("transmitting the dormant session, cnt: {}".format(cnt))
     # once = False
     data = [cnt]
     cnt += 1
 
     cmd = Command.create_with_write_file_action(
       file_id=0x42,
-      offset=0,
+      offset=2,
       data=data,
       interface_type=InterfaceType.D7ASP,
       interface_configuration=Configuration(
@@ -76,7 +76,7 @@ def send_dormant_session():
         addressee=Addressee(
           id_type=IdType.UID,
           id=addressee_id,
-          access_class=0x11
+          access_class=0x21
         ),
         dorm_to=CT.compress(60 * 5)
       )

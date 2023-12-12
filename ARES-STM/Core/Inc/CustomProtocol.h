@@ -78,6 +78,7 @@ typedef struct __attribute__((packed)) {
     uint8_t endDelimiter;
 } STM32ToDash7Message;
 
+//TODO: Add support for timestamps?
 typedef struct __attribute__((packed)) {
     uint8_t startDelimiter;
     float xCoord;

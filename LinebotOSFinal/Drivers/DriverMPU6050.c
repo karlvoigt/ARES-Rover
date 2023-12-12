@@ -2,6 +2,7 @@
 #include "hwconfig.h"
 #include "DriverMPU6050.h"
 #include "CustomProtocol.h"
+//#include "MPU6050_HAL.h"
 
 #include <util/delay.h>
 #include <stdio.h>
@@ -30,6 +31,8 @@ void DriverMPU6050Init(void)
 	uint8_t res;
 	uint8_t Buffer[2];
 	int a;
+
+	//MPU6050_setAddress(MPU6050_ADDR);
 	
 	Buffer[0]=MPU6050_WHO_AM_I;
 	res=TWIMWriteRead(MPU6050_ADDR,Buffer,1,Buffer,1);
@@ -43,6 +46,12 @@ void DriverMPU6050Init(void)
 		printf ("MPU6050 WHO_AM_I readback fail: %x read, %x expected\r\n",Buffer[0],MPU6050_ADDR);
 		return;
 	}
+	////test if mpu6050.c also working with test connection
+	//if (MPU6050_testConnection())
+	//{
+		//printf ("MPU6050: test connection success\r\n");
+		//return;
+	//}
 
 	//Setup sample rate
 	Buffer[0]=MPU6050_SMPRT_DIV;

@@ -30,9 +30,7 @@ Drivers/DriverUSART.d Drivers/DriverUSART.o: ../Drivers/DriverUSART.c \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\util\delay_basic.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\math.h \
  ../Tasks/CustomProtocol.h ../Tasks/MotionCommands.h \
- ../Drivers/DriverMotor.h ../Tasks/LineFollowerSpeedTask.h \
- ../Tasks/MotorSpeedTask.h ../Tasks/MotorPosTask.h ../Tasks/ADCTask.h \
- ../Tasks/CustomProtocol.h
+ ../Tasks/CustomProtocol.h ../Drivers/DriverDbgUSART.h
 
 ../Drivers/DriverUSART.h:
 
@@ -122,14 +120,6 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\
 
 ../Tasks/MotionCommands.h:
 
-../Drivers/DriverMotor.h:
-
-../Tasks/LineFollowerSpeedTask.h:
-
-../Tasks/MotorSpeedTask.h:
-
-../Tasks/MotorPosTask.h:
-
-../Tasks/ADCTask.h:
-
 ../Tasks/CustomProtocol.h:
+
+../Drivers/DriverDbgUSART.h:

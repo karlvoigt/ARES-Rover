@@ -6,11 +6,6 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
-#include "DriverMotor.h"
-#include "LineFollowerSpeedTask.h"
-#include "MotorSpeedTask.h"
-#include "MotorPosTask.h"
-#include "ADCTask.h"
 
 #include <stdio.h>
 

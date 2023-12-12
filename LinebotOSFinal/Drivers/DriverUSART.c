@@ -12,6 +12,7 @@
 
 
 #include "CustomProtocol.h"
+#include "DriverDbgUSART.h"
 
 static int stdio_putchar(char c, FILE * stream);
 static int stdio_getchar(FILE *stream);
@@ -95,14 +96,14 @@ ISR(USART_RXC_vect)
 		if (c==END_DELIMITER) {
 			receiveStarted=0;
 			USART_RX_transmission_complete = 1;
-			vTaskNotifyGiveFromISR(AresTaskHandle,&xHigherPriorityTaskWoken);
+			USART_RX_Count++;
+			DbgPrint("USART_RX_Count increased\n");
+			// vTaskNotifyGiveFromISR(AresTaskHandle,&xHigherPriorityTaskWoken);
 		} else {
-			USART_RX_Queue_has_data = 1;
 			xQueueSendToBackFromISR(UsartRxQueue,&c,&xHigherPriorityTaskWoken);
 		}
 	} else if (c==START_DELIMITER) {
 		receiveStarted=1;
-		USART_RX_transmission_complete = 0;
 	}
 	// xQueueSendToBackFromISR(UsartRxQueue,&c,&xHigherPriorityTaskWoken);
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);

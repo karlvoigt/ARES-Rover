@@ -29,6 +29,7 @@
 #include "MotionTask.h"
 #include "IPS_Task.h"
 #include "AccTask.h"
+#include "AresTask.h"
 
 #include <stdio.h>
 
@@ -47,12 +48,11 @@ static void WorkerStartup(void *pvParameters)
 {
 	int res;
 	
-	USART_RX_Queue_has_data = 0;
-	USART_RX_transmission_complete =1;
+	USART_RX_transmission_complete =0;
 	
 	DriverPowerVccAuxSet(1);//Enable Auxillary power line
 	DriverCursorstickInit();//Initialize cursor stick
-	// DriverLedInit();		//Initialize LED's
+	DriverLedInit();		//Initialize LED's
 	DriverUSARTInit();		//USART init and link to stdio
 	DriverPowerInit();		//Initialize aux power driver
 	
@@ -63,26 +63,28 @@ static void WorkerStartup(void *pvParameters)
 	DriverOLEDInit(2);		//Initialize OLED display
 	// DriverAdps9960Init();	//Initialize color sensor	
 	//DriverVL53L0XInit();	//Initialize rangefinder
+	DriverPL9823Set(0.0,0.0,0.0,0.0); 		//Set RGB to off
 
-	
 	vTaskDelay(50);
 	
 	//Enable test output (T21)
 	PORTA.DIRSET=1<<5;	
 	//Initialize application tasks			
 	
-	// InitOLEDMenuTask();
+	//InitOLEDMenuTask();
 	// InitADCTask();
 	InitMotorPosTask();
 	InitMotorSpeedTask();
 	// InitLineFollowerSpeedTask();
 	// InitLineFollowerDirectTask();
-	// InitRGBTask();
+	 //InitRGBTask();
 	InitGyroTask();
 	InitAccTask();
-	InitIPSTask();
+	// InitIPSTask();
 	// InitTerminalTask();
 	InitMotionTask();
+	InitAresTask();
+
 	
 	vTaskSuspend(NULL);
 

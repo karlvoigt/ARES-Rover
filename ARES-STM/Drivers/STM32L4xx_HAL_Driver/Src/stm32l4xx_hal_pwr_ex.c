@@ -1304,10 +1304,7 @@ void HAL_PWREx_EnterSTOP2Mode(uint8_t STOPEntry)
   if(STOPEntry == PWR_STOPENTRY_WFI)
   {
     /* Request Wait For Interrupt */
-	  __disable_irq();
-	  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
     __WFI();
-    __enable_irq();
   }
   else
   {

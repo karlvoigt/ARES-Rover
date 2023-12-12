@@ -1,5 +1,5 @@
-Tasks/MotionCommands.d Tasks/MotionCommands.o: ../Tasks/MotionCommands.c \
- ../Tasks/MotionCommands.h ../hwconfig.h \
+Drivers/Driverpl9823Bitbang.d Drivers/Driverpl9823Bitbang.o: \
+ ../Drivers/Driverpl9823Bitbang.c \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\inttypes.h \
@@ -12,22 +12,7 @@ Tasks/MotionCommands.d Tasks/MotionCommands.o: ../Tasks/MotionCommands.c \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\xmega.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\fuse.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\lock.h \
- ../FreeRTOS/FreeRTOS.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stddef.h \
- ../FreeRTOSConfig.h ../trace.h ../FreeRTOSConfig.h \
- ../FreeRTOS/projdefs.h ../FreeRTOS/portable.h \
- ../FreeRTOS/deprecated_definitions.h ../FreeRTOS/portmacro.h \
- ../FreeRTOS/mpu_wrappers.h ../FreeRTOS/task.h ../FreeRTOS/list.h \
- ../FreeRTOS/queue.h ../FreeRTOS/task.h ../FreeRTOS/semphr.h \
- ../FreeRTOS/queue.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h \
- ../Drivers/DriverMotor.h ../Tasks/LineFollowerSpeedTask.h \
- ../Tasks/MotorSpeedTask.h ../Tasks/MotorPosTask.h ../Tasks/ADCTask.h
-
-../Tasks/MotionCommands.h:
-
-../hwconfig.h:
+ ../Drivers/Driverpl9823.h
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\io.h:
 
@@ -53,48 +38,4 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\lock.h:
 
-../FreeRTOS/FreeRTOS.h:
-
-c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stddef.h:
-
-../FreeRTOSConfig.h:
-
-../trace.h:
-
-../FreeRTOSConfig.h:
-
-../FreeRTOS/projdefs.h:
-
-../FreeRTOS/portable.h:
-
-../FreeRTOS/deprecated_definitions.h:
-
-../FreeRTOS/portmacro.h:
-
-../FreeRTOS/mpu_wrappers.h:
-
-../FreeRTOS/task.h:
-
-../FreeRTOS/list.h:
-
-../FreeRTOS/queue.h:
-
-../FreeRTOS/task.h:
-
-../FreeRTOS/semphr.h:
-
-../FreeRTOS/queue.h:
-
-c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h:
-
-c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h:
-
-../Drivers/DriverMotor.h:
-
-../Tasks/LineFollowerSpeedTask.h:
-
-../Tasks/MotorSpeedTask.h:
-
-../Tasks/MotorPosTask.h:
-
-../Tasks/ADCTask.h:
+../Drivers/Driverpl9823.h:

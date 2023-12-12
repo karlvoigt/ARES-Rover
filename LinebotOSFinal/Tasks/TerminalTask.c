@@ -13,6 +13,7 @@
 #include "ADCTask.h"
 #include "DriverAdps9960.h"
 #include "memmap.h"
+#include "PowerManagement.h"
 
 #include <avr/pgmspace.h>
 #include <string.h>

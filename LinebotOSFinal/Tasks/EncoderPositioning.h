@@ -5,7 +5,7 @@
 #include "task.h" // Include this if you're using FreeRTOS functions like xTaskGetTickCount
 
 // Task handle
-extern TaskHandle_t EncoderPositioningTaskHandle;
+TaskHandle_t EncoderPositioningTaskHandle;
 
 // Task priority
 #define TASK_PRIORITY  configMAX_PRIORITIES - 1
@@ -30,4 +30,6 @@ float getEncoderYCoord(void);
 //Function to get the yaw
 float getEncoderYaw(void);
 
+// Function to reset the encoder position
+void resetEncoderPosition();
 #endif // ENCODER_POSITIONING_H

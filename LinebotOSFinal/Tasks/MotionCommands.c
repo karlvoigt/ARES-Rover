@@ -1,5 +1,11 @@
 #include "MotionCommands.h"
 
+#include "DriverMotor.h"
+#include "LineFollowerSpeedTask.h"
+#include "MotorSpeedTask.h"
+#include "MotorPosTask.h"
+#include "ADCTask.h"
+
 void doDriveStraight(float Distance, float Speed)
 {
 	TickType_t xLastWakeTime;

@@ -1,10 +1,12 @@
-Tasks/MotionCommands.d Tasks/MotionCommands.o: ../Tasks/MotionCommands.c \
- ../Tasks/MotionCommands.h ../hwconfig.h \
+Tasks/EncoderPositioning.d Tasks/EncoderPositioning.o: \
+ ../Tasks/EncoderPositioning.c ../FreeRTOS/FreeRTOS.h \
+ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stddef.h \
+ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdint.h \
+ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdint.h \
+ ../FreeRTOSConfig.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\inttypes.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdint.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdint.h \
  C:\Program\ Files\ (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include/avr/iox384c3.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\portpins.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\common.h \
@@ -12,32 +14,29 @@ Tasks/MotionCommands.d Tasks/MotionCommands.o: ../Tasks/MotionCommands.c \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\xmega.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\fuse.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\lock.h \
- ../FreeRTOS/FreeRTOS.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stddef.h \
- ../FreeRTOSConfig.h ../trace.h ../FreeRTOSConfig.h \
- ../FreeRTOS/projdefs.h ../FreeRTOS/portable.h \
- ../FreeRTOS/deprecated_definitions.h ../FreeRTOS/portmacro.h \
- ../FreeRTOS/mpu_wrappers.h ../FreeRTOS/task.h ../FreeRTOS/list.h \
- ../FreeRTOS/queue.h ../FreeRTOS/task.h ../FreeRTOS/semphr.h \
- ../FreeRTOS/queue.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h \
- c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h \
- ../Drivers/DriverMotor.h ../Tasks/LineFollowerSpeedTask.h \
- ../Tasks/MotorSpeedTask.h ../Tasks/MotorPosTask.h ../Tasks/ADCTask.h
+ ../trace.h ../FreeRTOSConfig.h ../FreeRTOS/projdefs.h \
+ ../FreeRTOS/portable.h ../FreeRTOS/deprecated_definitions.h \
+ ../FreeRTOS/portmacro.h ../FreeRTOS/mpu_wrappers.h ../FreeRTOS/task.h \
+ ../FreeRTOS/list.h ../FreeRTOS/queue.h ../FreeRTOS/task.h \
+ ../Drivers/DriverMotor.h ../Tasks/EncoderPositioning.h \
+ ../Tasks/GyroTask.h ../hwconfig.h \
+ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\math.h
 
-../Tasks/MotionCommands.h:
+../FreeRTOS/FreeRTOS.h:
 
-../hwconfig.h:
+c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stddef.h:
+
+c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdint.h:
+
+c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdint.h:
+
+../FreeRTOSConfig.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\io.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\inttypes.h:
-
-c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdint.h:
-
-c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdint.h:
 
 C:\Program\ Files\ (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAC_DFP\1.1.50\include/avr/iox384c3.h:
 
@@ -52,12 +51,6 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\fuse.h:
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\lock.h:
-
-../FreeRTOS/FreeRTOS.h:
-
-c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stddef.h:
-
-../FreeRTOSConfig.h:
 
 ../trace.h:
 
@@ -81,20 +74,12 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\
 
 ../FreeRTOS/task.h:
 
-../FreeRTOS/semphr.h:
-
-../FreeRTOS/queue.h:
-
-c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\stdio.h:
-
-c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\5.4.0\include\stdarg.h:
-
 ../Drivers/DriverMotor.h:
 
-../Tasks/LineFollowerSpeedTask.h:
+../Tasks/EncoderPositioning.h:
 
-../Tasks/MotorSpeedTask.h:
+../Tasks/GyroTask.h:
 
-../Tasks/MotorPosTask.h:
+../hwconfig.h:
 
-../Tasks/ADCTask.h:
+c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\math.h:

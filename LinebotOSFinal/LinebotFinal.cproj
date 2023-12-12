@@ -42,7 +42,7 @@
     </AsfFrameworkConfig>
     <avrtool>com.atmel.avrdbg.tool.atmelice</avrtool>
     <avrtoolinterface>PDI</avrtoolinterface>
-    <avrtoolserialnumber>J42700010251</avrtoolserialnumber>
+    <avrtoolserialnumber>J42700036719</avrtoolserialnumber>
     <avrdeviceexpectedsignature>0x1E9845</avrdeviceexpectedsignature>
     <com_atmel_avrdbg_tool_avrdragon>
       <ToolOptions>
@@ -73,7 +73,7 @@
         <InterfaceName>PDI</InterfaceName>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.atmelice</ToolType>
-      <ToolNumber>J42700010251</ToolNumber>
+      <ToolNumber>J42700036719</ToolNumber>
       <ToolName>Atmel-ICE</ToolName>
     </com_atmel_avrdbg_tool_atmelice>
     <avrtoolinterfaceclock>4000000</avrtoolinterfaceclock>
@@ -175,6 +175,9 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Drivers\Drivepl9823Bitbang.s">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Drivers\DriverAdc.c">
       <SubType>compile</SubType>
       <Link>Drivers\DriverAdc.c</Link>
@@ -235,6 +238,9 @@
       <Link>Drivers\DriverOled.h</Link>
     </Compile>
     <Compile Include="Drivers\Driverpl9823.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Drivers\Driverpl9823Bitbang.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Drivers\Driverpl9823USART.c">
@@ -348,6 +354,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\CustomProtocol.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\EncoderPositioning.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\EncoderPositioning.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\GyroTask.c">

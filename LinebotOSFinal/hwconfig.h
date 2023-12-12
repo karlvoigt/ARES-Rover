@@ -76,4 +76,6 @@
 #define TWIM_INTLEVEL 1							//TWI interrupt priority
 #define TWIM_BAUDRATE 400000					//TWI Bitrate (bps)
 
+//MPU6050 definitions
+#define MPU6050_INT_PIN 0						//MPU6050 INT pin
 #endif

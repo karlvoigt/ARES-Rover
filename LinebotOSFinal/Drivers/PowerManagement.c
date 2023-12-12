@@ -34,16 +34,17 @@ void enterSleepMode(void) {
 	
 	PMIC.CTRL &=0b11111100; // shut off medium and low lever interrupt
 	DriverPowerVccAuxSet(0);
-	sleep_enable();
-
-	vTaskDelay(50);
-	// Enter sleep mode.
-	sleep_cpu();
-
-	// Sleep mode will be exited upon receiving an interrupt.
-
-	// Disable sleep after waking up.
-	sleep_disable();
+	sleep_mode();
+	//sleep_enable();
+//
+	//vTaskDelay(50);
+	//// Enter sleep mode.
+	//sleep_cpu();
+//
+	//// Sleep mode will be exited upon receiving an interrupt.
+//
+	//// Disable sleep after waking up.
+	//sleep_disable();
 
 	// Re-enable peripherals if needed.
 	// For example, power_adc_enable(); (if such function exists or equivalent)

@@ -162,6 +162,9 @@ static void file_modified_callback(uint8_t file_id)
     log_print_string("file modified callback");
     uint32_t length = 1;
     d7ap_fs_read_file(SENSOR_FILE_ID, SENSOR_FILE_LED_OFFSET, &led_status, &length, ROOT_AUTH);
+    uart_send_string(uart_handle, "led status: ");
+    uart_send_byte(uart_handle, led_status);
+    uart_send_string(uart_handle, "\r\n");
     if(led_status) {
         led_on(0);
         led_on(1);

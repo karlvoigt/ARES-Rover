@@ -7,12 +7,6 @@
 #include "hwconfig.h"
 #include <math.h>
 
-// Function prototypes
-void WorkerEncoderPositioning(void *pvParameters)
-void InitEncoderPositioningTask(void)
-int getEncoderXCoord(void);
-int getEncoderYCoord(void);
-
 //Variables
 float xCoord = 0;
 float yCoord = 0;
@@ -28,19 +22,9 @@ EncoderStruct EncoderOld = {0, 0};
 #define POSITIONING_PERIOD_MS (1000/POSITIONING_FREQUENCY)
 #define MM_TO_CNT(x) (x/WHEEL_CIRC*360/DEG_PER_CNT)
 #define CNT_TO_MM(cnt) (cnt*WHEEL_CIRC*DEG_PER_CNT/360)
-#define DEG_TO_RAD(x) (x*PI/180)
+#define DEG_TO_RAD(x) (x*M_PI/180)
 
-// Task handle
-TaskHandle_t xTaskHandle;
 
-// Task priority
-#define TASK_PRIORITY  configMAX_PRIORITIES - 1
-
-// Task stack size
-#define TASK_STACK_SIZE configMINIMAL_STACK_SIZE
-
-// Task name
-#define TASK_NAME "EncoderPositioning"
 
 // Task function
 void WorkerEncoderPositioning(void *pvParameters)
@@ -77,8 +61,8 @@ void WorkerEncoderPositioning(void *pvParameters)
 //Task init function
 void InitEncoderPositioningTask(void)
 {
-    // Create the task
-    xTaskCreate(vTaskFunction, TASK_NAME, TASK_STACK_SIZE, NULL, TASK_PRIORITY, &xTaskHandle);
+    // Create the encoder positioning task
+    xTaskCreate(WorkerEncoderPositioning, TASK_NAME, TASK_STACK_SIZE, NULL, TASK_PRIORITY, &EncoderPositioningTaskHandle);
 }
 
 // Function to get the X coordinate
@@ -103,8 +87,9 @@ float getEncoderYaw(void)
 }
 
 //Reset Encoder Position
-void resetEncoderPosition(void)
+void resetEncoderPosition()
 {
-    EncoderOld = {0, 0};
+    EncoderOld.Cnt1 = 0;
+    EncoderOld.Cnt2 = 0;
 }
 
