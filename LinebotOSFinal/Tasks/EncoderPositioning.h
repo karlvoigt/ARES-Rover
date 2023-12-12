@@ -21,6 +21,8 @@ void WorkerEncoderPositioning(void *pvParameters);
 
 void InitEncoderPositioningTask(void);
 
+void ResumeEncoderPositioning();
+
 // Function to get the X coordinate
 float getEncoderXCoord(void);
 

@@ -268,7 +268,7 @@ void bootstrap() {
     // register a callback for when the sensor file is modified
     d7ap_fs_register_file_modified_callback(INSTRUCTION_FILE_ID, &file_modified_callback);
     // already trigger this callback to ensure we're already in the right state
-    file_modified_callback(INSTRUCTION_FILE_ID);
+    // file_modified_callback(INSTRUCTION_FILE_ID);
 
     d7ap_fs_init_file(SENSOR_FILE_ID, &sensor_file_header, NULL);
 

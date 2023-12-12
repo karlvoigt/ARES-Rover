@@ -370,6 +370,9 @@
       <SubType>compile</SubType>
       <Link>Tasks\GyroTask.h</Link>
     </Compile>
+    <Compile Include="Tasks\Globals.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Tasks\IPS_Task.c">
       <SubType>compile</SubType>
     </Compile>

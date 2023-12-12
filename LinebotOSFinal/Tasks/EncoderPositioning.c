@@ -6,6 +6,7 @@
 #include "GyroTask.h"
 #include "hwconfig.h"
 #include <math.h>
+#include "Globals.h"
 
 //Variables
 float xCoord = 0;
@@ -33,34 +34,46 @@ void WorkerEncoderPositioning(void *pvParameters)
 
     while (1)
     {
-        // Save last wakeup time
-        xLastWakeTime = xTaskGetTickCount();
+        if (inMotion) {
+            // Save last wakeup time
+            xLastWakeTime = xTaskGetTickCount();
 
-        //Get encoder positions and store in EncoderStruct variable
-        Encoder = DriverMotorGetEncoder();
+            //Get encoder positions and store in EncoderStruct variable
+            Encoder = DriverMotorGetEncoder();
 
-        GyroGet(&yawRate, &yaw);
+            GyroGet(&yawRate, &yaw);
 
-        // Calculate the distance traveled by each wheel
-        int16_t encoderLeft = Encoder.Cnt1 - EncoderOld.Cnt1;
-        int16_t encoderRight = Encoder.Cnt2 - EncoderOld.Cnt2;
-        //Average the two distances
-        int16_t encoderAverage = (encoderLeft + encoderRight) / 2;
-        float distance = CNT_TO_MM(encoderAverage);
+            // Calculate the distance traveled by each wheel
+            int16_t encoderLeft = Encoder.Cnt1 - EncoderOld.Cnt1;
+            int16_t encoderRight = Encoder.Cnt2 - EncoderOld.Cnt2;
+            //Average the two distances
+            int16_t encoderAverage = (encoderLeft + encoderRight) / 2;
+            float distance = CNT_TO_MM(encoderAverage);
 
-        //Use distance and yaw rate to calcute new coordinates
-        xCoordOld = xCoord;
-        yCoordOld = yCoord;
-        xCoord += distance * cosf(DEG_TO_RAD(yaw));
-        yCoord += distance * sinf(DEG_TO_RAD(yaw)); 
+            //Use distance and yaw rate to calcute new coordinates
+            xCoordOld = xCoord;
+            yCoordOld = yCoord;
+            xCoord += distance * cosf(DEG_TO_RAD(yaw));
+            yCoord += distance * sinf(DEG_TO_RAD(yaw)); 
 
-        vTaskDelayUntil(&xLastWakeTime, POSITIONING_PERIOD_MS);
+            vTaskDelayUntil(&xLastWakeTime, POSITIONING_PERIOD_MS);
+        } else {
+            vTaskSuspend(NULL);
+        }
     }
+}
+
+void ResumeEncoderPositioning()
+{
+    //Check if task is suspended
+    if (eTaskGetState(EncoderPositioningTaskHandle) == eSuspended) 
+        vTaskResume(EncoderPositioningTaskHandle);
 }
 
 //Task init function
 void InitEncoderPositioningTask(void)
 {
+	inMotion=0;
     // Create the encoder positioning task
     xTaskCreate(WorkerEncoderPositioning, TASK_NAME, TASK_STACK_SIZE, NULL, TASK_PRIORITY, &EncoderPositioningTaskHandle);
 }

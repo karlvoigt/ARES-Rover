@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "EncoderPositioning.h"
 #include "DriverDbgUSART.h"
 #include "PowerManagement.h"
 
@@ -30,7 +29,6 @@ void InitAresTask()
   xTaskCreate(WorkerUSARTCheck, "USARTCheck", 512, NULL, tskIDLE_PRIORITY+1, &USARTCheckTaskHandle);
 
   printf("Ares related tasks initiated\n");
-	vTaskSuspend(NavigationTaskHandle);
 }
 
 void WorkerAres(void *pvParameters)
@@ -63,7 +61,9 @@ void WorkerAres(void *pvParameters)
 				msg[i] = fgetc(stdin);
 			  }
 	  
-	  vTaskDelay(1000);
+      //Delay for debug printing, remove during production
+      //TODO: Remove this delay
+	    vTaskDelay(100);
 
 			// Step 4: Process the message
       navigationInstruction instructions [instructionCount * sizeof(navigationInstruction)];
@@ -74,10 +74,6 @@ void WorkerAres(void *pvParameters)
 			} 
 			// Print the instructions
 			printInstructions(instructions, instructionCount);
-			  // Free the allocated memory
-			  //free(msg);
-			  free(instructions);
-
 			//Start the navigation task
 			vTaskResume(NavigationTaskHandle);
 		}

@@ -1,0 +1,1 @@
+volatile uint8_t inMotion;

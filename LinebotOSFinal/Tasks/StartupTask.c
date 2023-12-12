@@ -30,6 +30,7 @@
 #include "IPS_Task.h"
 #include "AccTask.h"
 #include "AresTask.h"
+#include "EncoderPositioning.h"
 
 #include <stdio.h>
 
@@ -75,6 +76,7 @@ static void WorkerStartup(void *pvParameters)
 	// InitADCTask();
 	InitMotorPosTask();
 	InitMotorSpeedTask();
+	InitEncoderPositioningTask();
 	// InitLineFollowerSpeedTask();
 	// InitLineFollowerDirectTask();
 	 //InitRGBTask();

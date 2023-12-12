@@ -13,7 +13,7 @@
 
 #include "MotionCommands.h"
 
-uint8_t inMotion = 0;
+#include "Globals.h"
 
 void WorkerNavigation(void *pvParameters)
 {
@@ -22,42 +22,48 @@ void WorkerNavigation(void *pvParameters)
 		navigationInstruction instruction;
 		if (xQueueReceive(InstructionQueue,&instruction,0) == pdPASS)
 		{
-      if (!inMotion) {
-        inMotion = 1;
-      }
+      // if (!inMotion) {
+      //   inMotion = 1;
+      // }
 			switch (instruction.instructionType) {
 				case RIGHT:
 							doRotateCenter(90, 100);
-              vTaskResume(EncoderPositioningTaskHandle);
+              inMotion = 1;
+              ResumeEncoderPositioning();
 							doDriveStraight(instruction.instructionValue, 100);
-              vTaskSuspend(EncoderPositioningTaskHandle);
+              inMotion = 0;
 							break;
 				case LEFT:
 							doRotateCenter(-90, 100);
-              vTaskResume(EncoderPositioningTaskHandle);
+              inMotion = 1;
+              ResumeEncoderPositioning();
 							doDriveStraight(instruction.instructionValue, 100);
-              vTaskSuspend(EncoderPositioningTaskHandle);
+              inMotion = 0;
 							break;
 				case FORWARD:
-              vTaskResume(EncoderPositioningTaskHandle);
+              inMotion = 1;
+              ResumeEncoderPositioning();
 							doDriveStraight(instruction.instructionValue, 100);
-              vTaskSuspend(EncoderPositioningTaskHandle);
+              inMotion = 0;
 							break;
 				case BACKWARD:
-              vTaskResume(EncoderPositioningTaskHandle);
+              inMotion = 1;
+              ResumeEncoderPositioning();
 							doDriveStraight(-instruction.instructionValue, 100);
-              vTaskSuspend(EncoderPositioningTaskHandle);
+              inMotion = 0;
 							break;
 				case CLOCKWISE:
+              inMotion = 0;
 							doRotateCenter(instruction.instructionValue, 100);
 							break;
 				case COUNTERCLOCKWISE:
+              inMotion = 0;
 							doRotateCenter(-instruction.instructionValue, 100);
 							break;
 				case STOP:
 						  //Stop encoder positioning task
-						  resetEncoderPosition();
 						  inMotion = 0;
+						  resetEncoderPosition();
 
 						  //Send data to STM32
 						  transmitDataToSTM();
