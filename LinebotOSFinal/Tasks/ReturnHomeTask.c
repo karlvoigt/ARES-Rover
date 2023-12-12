@@ -12,11 +12,11 @@
 //Function definitions
 void InitReturnHomeTask()
 {
-	xTaskCreate( WorkerReturnHome, "ReturnHome", 256, NULL, tskIDLE_PRIORITY+3, ReturnHomeTaskHandle );	
+	xTaskCreate( WorkerReturnHome, "ReturnHome", 256, NULL, tskIDLE_PRIORITY+3, &ReturnHomeTaskHandle );	
     vTaskSuspend(ReturnHomeTaskHandle);
 }
 
-static void WorkerReturnHome(void *pvParameters)
+void WorkerReturnHome(void *pvParameters)
 {
 	while (1)
 	{

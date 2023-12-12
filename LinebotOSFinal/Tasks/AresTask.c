@@ -37,7 +37,6 @@ void WorkerAres(void *pvParameters)
 {
 	uint16_t totalLength;
 	uint8_t instructionCount;
-	uint8_t *msg =NULL;
   
   stmInterruptSet();
 	while(1)
@@ -54,29 +53,20 @@ void WorkerAres(void *pvParameters)
 			instructionCount = fgetc(stdin);
 			// Step 2: Calculate the total message length
 			totalLength = instructionCount * sizeof(navigationInstruction);
-			msg = malloc(totalLength * sizeof(uint8_t)); // Create a buffer to store the message
+			uint8_t msg[totalLength]; // Create a buffer to store the message
+			if (msg == NULL) {
+				// Handle memory allocation failure
+				printf("Malloc error\n");
+			}
 			// Step 3: Read the rest of the message
 			for (uint16_t i = 0; i < totalLength-1; i++) {
-				test = fgetc(stdin);
-				msg[i] = 0x11;
-				//memcopy test to Msg[i]
-				// memcpy(*Msg+i, &test, 1);
-				printf("Test %d: %02x ",i, test);
-				if (i!=0){
-				  printf("Prev Msg: %02x ", msg[i-1]);
-				}
-				printf("Msg: %02x\n", msg[i]);
+				msg[i] = fgetc(stdin);
 			  }
-      printf("Msg: ");
-      for (uint16_t i = 0; i < totalLength-1; i++) {
-          printf("%02x ", msg[i]);
-      }
-      printf("\n");
 	  
 	  vTaskDelay(1000);
 
 			// Step 4: Process the message
-      navigationInstruction *instructions = malloc(instructionCount * sizeof(navigationInstruction));
+      navigationInstruction instructions [instructionCount * sizeof(navigationInstruction)];
 			// Decode the instructions
 			for (uint16_t i = 0; i < instructionCount; i++) {
 				memcpy(&instructions[i], &msg[i * sizeof(navigationInstruction)], sizeof(navigationInstruction));
@@ -85,7 +75,7 @@ void WorkerAres(void *pvParameters)
 			// Print the instructions
 			printInstructions(instructions, instructionCount);
 			  // Free the allocated memory
-			  free(msg);
+			  //free(msg);
 			  free(instructions);
 
 			//Start the navigation task

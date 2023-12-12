@@ -7,6 +7,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "CustomProtocol.h"
 
 // Declare your class and its member functions
 TaskHandle_t NavigationTaskHandle;
