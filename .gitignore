@@ -1,3 +1,8 @@
 
 .DS_Store
 .DS_Store
+.vscode
+ARES-STM/.settings
+ARES-STM/Debug
+LineBotOSFinal/.vs
+LineBotOSFinal/Debug

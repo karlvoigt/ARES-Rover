@@ -420,12 +420,24 @@
       <SubType>compile</SubType>
       <Link>Tasks\MotorSpeedTask.h</Link>
     </Compile>
+    <Compile Include="Tasks\NavigationTask.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\NavigationTask.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Tasks\OledMenuTask.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\OledMenuTask.h">
       <SubType>compile</SubType>
       <Link>Tasks\OledMenuTask.h</Link>
+    </Compile>
+    <Compile Include="Tasks\ReturnHomeTask.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Tasks\ReturnHomeTask.h">
+      <SubType>compile</SubType>
     </Compile>
     <Compile Include="Tasks\RGBTask.c">
       <SubType>compile</SubType>

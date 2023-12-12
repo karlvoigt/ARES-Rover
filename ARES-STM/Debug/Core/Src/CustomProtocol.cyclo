@@ -1,3 +1,0 @@
-../Core/Src/CustomProtocol.c:18:6:sendMessage	1
-../Core/Src/CustomProtocol.c:29:7:sendLightSensorData	1
-../Core/Src/CustomProtocol.c:68:6:parseUARTMessage	6

@@ -1,3 +1,0 @@
-../Core/Src/CustomProtocol.c:18:6:sendMessage	32	static
-../Core/Src/CustomProtocol.c:29:7:sendLightSensorData	24	static
-../Core/Src/CustomProtocol.c:68:6:parseUARTMessage	24	static

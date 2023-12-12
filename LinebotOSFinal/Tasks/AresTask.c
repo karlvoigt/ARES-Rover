@@ -54,19 +54,19 @@ void WorkerAres(void *pvParameters)
 			instructionCount = fgetc(stdin);
 			// Step 2: Calculate the total message length
 			totalLength = instructionCount * sizeof(navigationInstruction);
-			Msg = malloc(totalLength * sizeof(uint8_t)); // Create a buffer to store the message
+			msg = malloc(totalLength * sizeof(uint8_t)); // Create a buffer to store the message
 			// Step 3: Read the rest of the message
 			for (uint16_t i = 0; i < totalLength-1; i++) {
-        test = fgetc(stdin);
-        msg[i] = 0x11;
-        //memcopy test to Msg[i]
-        // memcpy(*Msg+i, &test, 1);
-		    printf("Test %d: %02x ",i, test);
-        if (i!=0){
-          printf("Prev Msg: %02x ", msg[i-1]);
-        }
-        printf("Msg: %02x\n", msg[i]);
-      }
+				test = fgetc(stdin);
+				msg[i] = 0x11;
+				//memcopy test to Msg[i]
+				// memcpy(*Msg+i, &test, 1);
+				printf("Test %d: %02x ",i, test);
+				if (i!=0){
+				  printf("Prev Msg: %02x ", msg[i-1]);
+				}
+				printf("Msg: %02x\n", msg[i]);
+			  }
       printf("Msg: ");
       for (uint16_t i = 0; i < totalLength-1; i++) {
           printf("%02x ", msg[i]);
@@ -84,9 +84,9 @@ void WorkerAres(void *pvParameters)
 			} 
 			// Print the instructions
 			printInstructions(instructions, instructionCount);
-      // Free the allocated memory
-      free(Msg);
-      free(instructions);
+			  // Free the allocated memory
+			  free(msg);
+			  free(instructions);
 
 			//Start the navigation task
 			vTaskResume(NavigationTaskHandle);
