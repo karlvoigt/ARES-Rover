@@ -14,10 +14,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "Globals.h"
+
 uint8_t *ucHeap;
 
 int main(void)
 {
+	//Initliaze variables
+	shouldSleep=0;
+
+
 	DriverSysClkXtalInit();	//Clock init
 	//Allocate FreeRTOS heap
 	ucHeap=malloc(configTOTAL_HEAP_SIZE);

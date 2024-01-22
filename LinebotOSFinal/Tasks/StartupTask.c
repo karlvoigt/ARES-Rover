@@ -33,6 +33,8 @@
 #include "EncoderPositioning.h"
 
 #include <stdio.h>
+#include <avr/sleep.h>
+
 
 #include "CustomProtocol.h"
 
@@ -51,6 +53,8 @@ static void WorkerStartup(void *pvParameters)
 	
 	USART_RX_transmission_complete =0;
 	
+	sleep_enable();
+	
 	DriverPowerVccAuxSet(1);//Enable Auxillary power line
 	DriverCursorstickInit();//Initialize cursor stick
 	DriverLedInit();		//Initialize LED's
@@ -62,6 +66,8 @@ static void WorkerStartup(void *pvParameters)
 	//DriverAdcInit();		//Initialize ADC driver
 	
 	DriverOLEDInit(2);		//Initialize OLED display
+	DriverOLEDClearScreen();
+	DriverOLEDSleep();
 	// DriverAdps9960Init();	//Initialize color sensor	
 	//DriverVL53L0XInit();	//Initialize rangefinder
 	DriverPL9823Set(0.0,0.0,0.0,0.0); 		//Set RGB to off
@@ -76,7 +82,7 @@ static void WorkerStartup(void *pvParameters)
 	// InitADCTask();
 	InitMotorPosTask();
 	InitMotorSpeedTask();
-	InitEncoderPositioningTask();
+	//InitEncoderPositioningTask();
 	// InitLineFollowerSpeedTask();
 	// InitLineFollowerDirectTask();
 	 //InitRGBTask();
@@ -87,7 +93,9 @@ static void WorkerStartup(void *pvParameters)
 	InitMotionTask();
 	InitAresTask();
 
-	
+	// vTaskDelay(1000);
+	//  loadTestInstructions();
+
 	vTaskSuspend(NULL);
 
 }

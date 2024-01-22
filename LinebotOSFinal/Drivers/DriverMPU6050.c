@@ -145,7 +145,7 @@ void DriverMPU6050GyroGet(int16_t *Gx,int16_t *Gy,int16_t *Gz)
 
 	if (Gx!=NULL) *Gx=x;	
 	if (Gy!=NULL) *Gy=y;	
-	if (Gz!=NULL) *Gz=z;	
+	if (Gz!=NULL) *Gz= -z;	
 }
 
 //Function to get the accelerometer data
@@ -170,5 +170,5 @@ void DriverMPU6050AccGet(int16_t *Ax,int16_t *Ay,int16_t *Az)
 
 	if (Ax!=NULL) *Ax=x;	
 	if (Ay!=NULL) *Ay=y;	
-	if (Az!=NULL) *Az=z;	
+	if (Az!=NULL) *Az= -z;	
 }

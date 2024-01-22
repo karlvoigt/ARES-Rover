@@ -7,8 +7,11 @@
 #include "queue.h"
 #include "semphr.h"
 #include "trace.h"
+#include <math.h>
 
 #define RATE_CST (1.0/131.0)
+#define THRESHOLD 0.001
+#define MAX_ITERATIONS 1000
 
 static SemaphoreHandle_t GyroSema;
 static float GlobYawRate=0.0,GlobYaw=0.0;
@@ -35,8 +38,26 @@ static void WorkerGyro(void *pvParameters)
 	xLastWakeTime=xTaskGetTickCount();
 	
 	vTaskDelay(200);
-	DriverMPU6050GyroGet(NULL,NULL,&Gz);
-	GyroYawOffset=(float) Gz*RATE_CST;
+	//Calibrate gyro offset
+	float sum = 0;
+	int count = 0;
+	float error = 0;
+	float average = 0;
+
+	for(int i = 0; i < MAX_ITERATIONS; i++) {
+		DriverMPU6050GyroGet(NULL,NULL,&Gz);
+		sum += Gz;
+		count++;
+		average = sum / count;
+		error = fabs(Gz - average);
+
+		if(error < THRESHOLD) {
+			break;
+		}
+		vTaskDelay(5);
+	}
+
+	GyroYawOffset = average * RATE_CST;
 
 	
 	while (1)
@@ -48,6 +69,8 @@ static void WorkerGyro(void *pvParameters)
 		
 		//Integration to yaw angle
 		GlobYaw+=((GlobYawRate/100)+(OldYawRate/100))/2;
+		if (GlobYaw>360.0) GlobYaw-=360.0;
+		if (GlobYaw<0.0) GlobYaw+=360.0;
 		
 		OldYawRate=GlobYawRate;
 		

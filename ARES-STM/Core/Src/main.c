@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "queue.h"
 #include "LTR329.h"
+#include "SHT40.h"
 #include "CustomProtocol.h"
 #include <math.h>
 #include <string.h>
@@ -38,7 +39,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define UID 0x0001
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -61,40 +62,26 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityRealtime,
 };
-/* Definitions for UART2Task */
-osThreadId_t UART2TaskHandle;
-const osThreadAttr_t UART2Task_attributes = {
-  .name = "UART2Task",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityHigh,
-};
-/* Definitions for UART1Task */
-osThreadId_t UART1TaskHandle;
-const osThreadAttr_t UART1Task_attributes = {
-  .name = "UART1Task",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityHigh,
-};
-/* Definitions for LightSensor_Tas */
-osThreadId_t LightSensor_TasHandle;
-const osThreadAttr_t LightSensor_Tas_attributes = {
-  .name = "LightSensor_Tas",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal1,
-};
-/* Definitions for Temp_Task */
-osThreadId_t Temp_TaskHandle;
-const osThreadAttr_t Temp_Task_attributes = {
-  .name = "Temp_Task",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
-};
 /* Definitions for NavigationTask */
 osThreadId_t NavigationTaskHandle;
 const osThreadAttr_t NavigationTask_attributes = {
   .name = "NavigationTask",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityAboveNormal2,
+};
+/* Definitions for DemoTask */
+osThreadId_t DemoTaskHandle;
+const osThreadAttr_t DemoTask_attributes = {
+  .name = "DemoTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityHigh5,
+};
+/* Definitions for SensingTask */
+osThreadId_t SensingTaskHandle;
+const osThreadAttr_t SensingTask_attributes = {
+  .name = "SensingTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for uart1Queue */
 osMessageQueueId_t uart1QueueHandle;
@@ -108,13 +95,13 @@ const osMessageQueueAttr_t uart2Queue_attributes = {
 };
 /* USER CODE BEGIN PV */
 
-uint8_t uart1_buffer[1], uart2_buffer[sizeof(Dash7ToSTM32Message)];
+uint8_t uart1_buffer[sizeof(LineBotToSTM32Message)], uart2_buffer[sizeof(BLERoverMessage)];
 uint8_t uart1_accumulate_buffer[UART_BUFFER_SIZE],uart2_accumulate_buffer[UART_BUFFER_SIZE];;
 uint8_t uart1_accumulate_pos = 0;
 uint8_t uart2_accumulate_pos = 0;
-uint16_t light_ch0, light_ch1;
+uint16_t light_ch0, light_ch1,raw_temp,raw_humidity;
 uint8_t receivedData[100]; // Adjust size as needed
-const uint8_t verbose=1;
+const uint8_t verbose=0;
 
 ReceiveState UART1receiveState = WAIT_FOR_START_DELIMITER;
 uint16_t dataLength = 0;
@@ -129,7 +116,9 @@ float targetAngle = 0;
 float plannedAngle = 0;
 SensorMeasurements targetMeasurements;
 Dash7ToSTM32Message newInstruction;
-uint8_t justWokenUpFromStop2;
+BLERoverMessage bleMessage;
+uint8_t BLEstarted;
+uint8_t shouldStop;
 
 /* USER CODE END PV */
 
@@ -141,11 +130,9 @@ static void MX_USART2_UART_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART1_UART_Init(void);
 void StartDefaultTask(void *argument);
-void UART2_Task(void *argument);
-void UART1_Task(void *argument);
-void LightSensorTask(void *argument);
-void TempTask(void *argument);
 void StartNavigationTask(void *argument);
+void StartDemoTask(void *argument);
+void StartSensingTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -161,44 +148,59 @@ PUTCHAR_PROTOTYPE {
 
 void transmitInstructions(navigationInstruction* instructions, uint8_t instructionCnt);
 uint8_t receiveInstructions(uint8_t* data, uint16_t dataLength);
-void printInstructions(navigationInstruction* instructions, uint16_t numInstructions);
+//void printInstructions(navigationInstruction* instructions, uint16_t numInstructions);
 uint8_t calculatePath(navigationInstruction* instructions);
 
 void Toggle_LED(void) {
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_3);
 }
 void Enter_Stop2_Mode(void) {
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
+//	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, GPIO_PIN_RESET);
 
     // Enter Stop 2 mode
     HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI);
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-    if (GPIO_Pin == GPIO_PIN_4) {
-        // This function will be called by the HAL interrupt handler which should clear the pending bit
-        // Perform tasks upon EXTI interrupt from PA4
-        // For example, signaling a task or setting a flag
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+//    printf("ISR");
+//    if (GPIO_Pin == GPIO_PIN_4) {
+//        // This function will be called by the HAL interrupt handler which should clear the pending bit
+//        // Perform tasks upon EXTI interrupt from PA4
+//        // For example, signaling a task or setting a flag
+////        SystemClock_Config();
+//        printf("ISR");
+//        // Set a flag to indicate that a wakeup event has occurred
+//        justWokenUpFromStop2 = 1;
+//        shouldStop = 0;
+//    }
+//}
 
-        SystemClock_Config();
-
-        // Set a flag to indicate that a wakeup event has occurred
-        justWokenUpFromStop2 = 1;
-
-    }
-}
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    if (GPIO_Pin == GPIO_PIN_4 || GPIO_Pin == GPIO_PIN_5) {
+        // This function will be called by the HAL interrupt handler which should clear the pending bit
+        // Perform tasks upon EXTI interrupt from PA4
+        // For example, signaling a task or setting a flag
+//        SystemClock_Config();
+        // Set a flag to indicate that a wakeup event has occurred
+        shouldStop = 0;
+        HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
+    }
+}
+
 uint8_t calculatePath(navigationInstruction* instructions){
     uint8_t instructionCount = 0;
     float deltaX = targetX - curX;
     float deltaY = targetY - curY;
 
     // Calculate the angle to the target point
-    float targetAngle = atan2(deltaY, deltaX) * (180.0 / M_PI);
+    float targetAngle = atan2(deltaX, deltaY) * (180.0 / M_PI);
     targetAngle = fmod(targetAngle + 360.0, 360.0); // Ensure the angle is between 0 and 360
 
     // Calculate the shortest turn to the target angle
@@ -216,7 +218,7 @@ uint8_t calculatePath(navigationInstruction* instructions){
 
     // Move to the target point
     float distance = sqrt(deltaX * deltaX + deltaY * deltaY);
-    instructions[instructionCount].instructionType = turnAngle >= -90.0 && turnAngle <= 90.0 ? FORWARD : BACKWARD;
+    instructions[instructionCount].instructionType =  FORWARD ;
     instructions[instructionCount].instructionValue = distance;
     instructionCount++;
 
@@ -235,6 +237,10 @@ void transmitInstructions(navigationInstruction* instructions, uint8_t instructi
       Payload consists of the instructions which are 5 bytes each
       The data is transmitted on USART2 using HAL_UART_Transmit
     */
+
+	//Wakeup LineBot
+	HAL_GPIO_WritePin(LinebotTrigger_GPIO_Port, LinebotTrigger_Pin, GPIO_PIN_RESET);
+
     uint8_t transmission[instructionCnt*sizeof(navigationInstruction) + 3];
 
     transmission[0] = START_DELIMITER;
@@ -244,7 +250,13 @@ void transmitInstructions(navigationInstruction* instructions, uint8_t instructi
         memcpy(&transmission[3 + i*sizeof(navigationInstruction)], &instructions[i].instructionValue, 4);
     }
     transmission[instructionCnt*sizeof(navigationInstruction) + 2] = END_DELIMITER;
-    HAL_UART_Transmit(&huart2, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart1, transmission, instructionCnt*sizeof(navigationInstruction) + 3, HAL_MAX_DELAY);
+
+	HAL_GPIO_WritePin(LinebotTrigger_GPIO_Port, LinebotTrigger_Pin, GPIO_PIN_SET);
+    //TODO: wait for transmission to complete and go to sleep
+    vTaskDelay(50);
+//    Enter_Stop2_Mode();
+    shouldStop =1;
 //    receiveInstructions(transmission, instructionCnt*sizeof(navigationInstruction) + 3);
 }
 /* USER CODE END 0 */
@@ -284,7 +296,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 //  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
 //  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
-  printf("Setup complete\n");
+  if (verbose) printf("Starting Setup\n");
+  shouldStop = 0;
 
   /* USER CODE END 2 */
 
@@ -318,20 +331,14 @@ int main(void)
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of UART2Task */
-  UART2TaskHandle = osThreadNew(UART2_Task, NULL, &UART2Task_attributes);
-
-  /* creation of UART1Task */
-  UART1TaskHandle = osThreadNew(UART1_Task, NULL, &UART1Task_attributes);
-
-  /* creation of LightSensor_Tas */
-  LightSensor_TasHandle = osThreadNew(LightSensorTask, NULL, &LightSensor_Tas_attributes);
-
-  /* creation of Temp_Task */
-  Temp_TaskHandle = osThreadNew(TempTask, NULL, &Temp_Task_attributes);
-
   /* creation of NavigationTask */
   NavigationTaskHandle = osThreadNew(StartNavigationTask, NULL, &NavigationTask_attributes);
+
+  /* creation of DemoTask */
+  DemoTaskHandle = osThreadNew(StartDemoTask, NULL, &DemoTask_attributes);
+
+  /* creation of SensingTask */
+  SensingTaskHandle = osThreadNew(StartSensingTask, NULL, &SensingTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
 //  vTaskSuspend(NavigationTaskHandle);
@@ -565,7 +572,20 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, LinebotTrigger_Pin|LD3_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : LinebotIntPin_Pin Dash7IntPin_Pin */
+  GPIO_InitStruct.Pin = LinebotIntPin_Pin|Dash7IntPin_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LinebotTrigger_Pin */
+  GPIO_InitStruct.Pin = LinebotTrigger_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LinebotTrigger_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD3_Pin */
   GPIO_InitStruct.Pin = LD3_Pin;
@@ -574,6 +594,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD3_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -581,75 +608,49 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-  if (huart->Instance == USART1)
-    {
-        switch (UART1receiveState) {
-            case WAIT_FOR_START_DELIMITER:
-                if (uart1_buffer[0] == START_DELIMITER) {
-                    UART1receiveState = WAIT_FOR_DATA_LENGTH_HIGH;
-                }
-                HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
-                break;
+	if (huart->Instance == USART1)
+	{
+		if (uart1_buffer[0]== START_DELIMITER && uart1_buffer[13]==END_DELIMITER) {
+		  memcpy(&curX, &uart1_buffer[1], sizeof(float));
+		  memcpy(&curY, &uart1_buffer[5], sizeof(float));
+		  memcpy(&curAngle, &uart1_buffer[9], sizeof(float));
 
-            case WAIT_FOR_DATA_LENGTH_HIGH:
-                dataLength = uart1_buffer[0] << 8;
-                UART1receiveState = WAIT_FOR_DATA_LENGTH_LOW;
-                HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
-                break;
-
-            case WAIT_FOR_DATA_LENGTH_LOW:
-                dataLength |= uart1_buffer[0];
-                UART1receiveState = WAIT_FOR_DATA;
-                dma_buffer = (uint8_t*)pvPortMalloc((dataLength*12 + 1) * sizeof(uint8_t)); // Allocate buffer for DMA transfer
-                HAL_UART_Receive_DMA(&huart1, dma_buffer, dataLength*12 + 1);
-                break;
-
-            case WAIT_FOR_DATA:
-                // DMA transfer is complete
-                HAL_UART_DMAStop(&huart1); // Stop the DMA transfer
-
-                // Check if the last byte is the end delimiter
-                if (dma_buffer[dataLength*12] == END_DELIMITER) {
-                    // Process the received data here
-                    // You can send the data to a FreeRTOS task using a queue
-                    xQueueSendFromISR(uart1QueueHandle, dma_buffer, NULL);
-                }
-
-                // Free the DMA buffer
-                vPortFree(dma_buffer);
-                dma_buffer = NULL;
-
-                // Restart the interrupt-based reception
-                UART1receiveState = WAIT_FOR_START_DELIMITER;
-                HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
-                break;
-        }
-    }
-	// if (huart->Instance == USART1)
-	// {
-	// 	xQueueSendFromISR(uart1QueueHandle, uart1_buffer, NULL);
-	// 	HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
-	// }
+		  vTaskNotifyGiveFromISR(SensingTaskHandle, pdFALSE);
+		}
+		HAL_UART_Receive_DMA(&huart1, uart1_buffer, 14);
+	}
 	else if (huart->Instance == USART2)
 	{
-//		HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-      newInstruction.startDelimiter = uart2_buffer[0];
+		//Can either be a BLE message or a new instruction
+		//Case of new instruction
+		if (uart2_buffer[0] == START_DELIMITER && uart2_buffer[10] == END_DELIMITER && uart2_buffer[11] == 0x00) {
+		  // Received a new instruction
+		  // Copy the instruction into the newInstruction variable
+		  newInstruction.startDelimiter = uart2_buffer[0];
 
-      memcpy(&newInstruction.xCoord, &uart2_buffer[1], sizeof(float));
-      memcpy(&newInstruction.yCoord, &uart2_buffer[5], sizeof(float));
+		  memcpy(&newInstruction.xCoord, &uart2_buffer[1], sizeof(float));
+		  memcpy(&newInstruction.yCoord, &uart2_buffer[5], sizeof(float));
 
-      newInstruction.sensorControl = uart2_buffer[9];
-      newInstruction.endDelimiter = uart2_buffer[10];
-//		xQueueSendFromISR(uart2QueueHandle, &msg, NULL);
+		  newInstruction.sensorControl = uart2_buffer[9];
+		  newInstruction.endDelimiter = uart2_buffer[10];
 
-      // Prepare to receive the next character
-      HAL_UART_Receive_DMA(&huart2, uart2_buffer, 11);
+		  // HAL_UART_Transmit(&huart2, uart2_buffer, 11, HAL_MAX_DELAY);
 
-      // Notify the StartNavigationTask
-      vTaskNotifyGiveFromISR(NavigationTaskHandle, pdFALSE);
+		  // Notify the StartNavigationTask
+		  vTaskNotifyGiveFromISR(NavigationTaskHandle, pdFALSE);
+		}
+		//case of BLE message
+		else if (uart2_buffer[0] == START_DELIMITER && uart2_buffer[26] == END_DELIMITER) {
+		  // Received a BLE message
+		  // Copy the message into the receivedData variable
+		  memcpy(&bleMessage, uart2_buffer, 27);
+		  // printf("BLE Message Received\n");
+		  // printf("BLE Message: ");
+		  // HAL_UART_Transmit(&huart2, &bleMessage, 27, HAL_MAX_DELAY);
+		}
 
-//      xTaskResumeFromISR(NavigationTaskHandle);
-
+		// Prepare to receive the next message
+		HAL_UART_Receive_DMA(&huart2, uart2_buffer, 27);
 	}
 }
 
@@ -676,118 +677,20 @@ void printSensorMeasurements(SensorMeasurements measurements) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-//  HAL_UART_Receive_IT(&huart2, uart2_buffer, 1);
-  HAL_UART_Receive_DMA(&huart2, uart2_buffer,11);
-  HAL_UART_Receive_IT(&huart1, uart1_buffer, 1);
-  printf("Setup complete\n");
+  BLEstarted = 0;
+  HAL_UART_Receive_DMA(&huart2, uart2_buffer,27);
+  HAL_UART_Receive_DMA(&huart1, uart1_buffer,14);
+  LTR329_Init();
+  if (verbose) printf("Setup complete\n");
   vTaskSuspend(NULL);
-  Enter_Stop2_Mode();
+//  Enter_Stop2_Mode();
   /* Infinite loop */
   for(;;)
   {
-	Toggle_LED();
-    osDelay(500);
+	  Toggle_LED();
+	  osDelay(500);
   }
   /* USER CODE END 5 */
-}
-
-/* USER CODE BEGIN Header_UART2_Task */
-/**
-* @brief Function implementing the UART2Task thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_UART2_Task */
-void UART2_Task(void *argument)
-{
-  /* USER CODE BEGIN UART2_Task */
-//	uint8_t data[sizeof(Dash7ToSTM32Message)];
-//	Dash7ToSTM32Message msg;
-//	MessageUnion receivedMessage;
-  /* Infinite loop */
-  for(;;)
-  {
-//    if (xQueueReceive(uart2QueueHandle, &receivedMessage, portMAX_DELAY) == pdPASS)
-//    {
-//      //Check for message structure
-//      if (receivedMessage.startDelimiter != START_DELIMITER || receivedMessage.endDelimiter != END_DELIMITER)
-//      {
-//        // Invalid message structure
-//        continue;
-//      } else {
-//        targetX = receivedMessage.xCoord;
-//        targetY = receivedMessage.yCoord;
-//        targetMeasurements = *(SensorMeasurements*)&receivedMessage.sensorControl;
-//        printSensorMeasurements(targetMeasurements);
-//        printf("Received message with x: %f, y: %f\n", targetX, targetY);
-//      }
-//    }
-	  osDelay(10000);
-  }
-  /* USER CODE END UART2_Task */
-}
-
-/* USER CODE BEGIN Header_UART1_Task */
-/**
-* @brief Function implementing the UART1Task thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_UART1_Task */
-void UART1_Task(void *argument)
-{
-  /* USER CODE BEGIN UART1_Task */
-	vTaskSuspend(NULL);
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END UART1_Task */
-}
-
-/* USER CODE BEGIN Header_LightSensorTask */
-/**
-* @brief Function implementing the LightSensor_Tas thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_LightSensorTask */
-void LightSensorTask(void *argument)
-{
-  /* USER CODE BEGIN LightSensorTask */
-	LTR329_Init();
-	/* Infinite loop */
-	  for(;;)
-	  {
-		// Read light data
-		LTR329_Read_Light(&light_ch0, &light_ch1);
-//		if (verbose) printf("Light Ch0: %d \n Light Ch1: %d\n________\n\n",light_ch0,light_ch1);
-		sendLightSensorData(light_ch0);
-		osDelay(2000);
-	  }
-	  // In case we accidentally exit from task loop
-	osThreadTerminate(NULL);
-  /* USER CODE END LightSensorTask */
-}
-
-/* USER CODE BEGIN Header_TempTask */
-/**
-* @brief Function implementing the Temp_Task thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_TempTask */
-void TempTask(void *argument)
-{
-  /* USER CODE BEGIN TempTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-    vTaskSuspend(NULL);
-  }
-  /* USER CODE END TempTask */
 }
 
 /* USER CODE BEGIN Header_StartNavigationTask */
@@ -817,11 +720,125 @@ void StartNavigationTask(void *argument)
         navigationInstruction instructions[INSTRUCTION_BUFFER_SIZE];
         uint8_t instructionCnt = calculatePath(instructions);
         transmitInstructions(instructions, instructionCnt);
-//        printSensorMeasurements(targetMeasurements);
       } 
     }
   }
   /* USER CODE END StartNavigationTask */
+}
+
+/* USER CODE BEGIN Header_StartDemoTask */
+/**
+* @brief Function implementing the DemoTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartDemoTask */
+void StartDemoTask(void *argument)
+{
+  /* USER CODE BEGIN StartDemoTask */
+	if (verbose) printf("Start Demo Task");
+	vTaskDelay(10); //Gives LineBot time to startup before sending instructions
+	targetX = newInstruction.xCoord;
+	targetY = newInstruction.yCoord;
+	memcpy(&targetMeasurements, &newInstruction.sensorControl, sizeof(targetMeasurements));
+	navigationInstruction instructions[10];
+  uint8_t instructionCount = 0;
+
+  //Create array of points to move to
+  float points[4][2] = {{0,250},{250,250},{0,500},{250,750}};
+
+  //Move to each point
+  for (int i = 0; i < 4; i++) {
+    targetX = points[i][0];
+    targetY = points[i][1];
+    float deltaX = targetX - curX;
+    float deltaY = targetY - curY;
+    curX = targetX;
+    curY = targetY;
+
+    // Calculate the angle to the target point
+    float targetAngle = atan2(deltaX, deltaY) * (180.0 / M_PI);
+    targetAngle = fmod(targetAngle + 360.0, 360.0); // Ensure the angle is between 0 and 360
+
+    // Calculate the shortest turn to the target angle
+    float turnAngle = targetAngle - curAngle;
+    if (turnAngle < -180.0) turnAngle += 360.0;
+    if (turnAngle > 180.0) turnAngle -= 360.0;
+
+    // Turn to face the target point
+    if (turnAngle != 0.0) {
+        instructions[instructionCount].instructionType = turnAngle > 0.0 ? CLOCKWISE : COUNTERCLOCKWISE;
+        instructions[instructionCount].instructionValue = fabs(turnAngle);
+        instructionCount++;
+        curAngle = targetAngle;
+    }
+
+    // Move to the target point
+    float distance = sqrt(deltaX * deltaX + deltaY * deltaY);
+    instructions[instructionCount].instructionType =  FORWARD;
+    instructions[instructionCount].instructionValue = distance;
+    instructionCount++;
+  }
+
+  // Add a stop instruction
+  instructions[instructionCount].instructionType = STOP;
+  instructions[instructionCount].instructionValue = 0.0;
+  instructionCount++;
+
+  transmitInstructions(instructions, instructionCount);
+
+	vTaskSuspend(NULL); //Stop DemoTask
+  /* Infinite loop */
+  /* USER CODE END StartDemoTask */
+}
+
+/* USER CODE BEGIN Header_StartSensingTask */
+/**
+* @brief Function implementing the SensingTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartSensingTask */
+void StartSensingTask(void *argument)
+{
+  /* USER CODE BEGIN StartSensingTask */
+  /* Infinite loop */
+  for(;;)
+  {
+    uint32_t ulNotificationValue;
+    BaseType_t xResult = xTaskNotifyWait( pdFALSE, 0, &ulNotificationValue, portMAX_DELAY );
+//	 BaseType_t xResult =  pdPASS;
+//	vTaskDelay(1000);
+
+    if( xResult == pdPASS )
+    {
+      /* A notification was received. */
+      //Read temp & humidity data
+      SHT40_Read_Temp_Hum(&raw_temp, &raw_humidity);
+      // Read light data
+	  LTR329_Read_Light(&light_ch0, &light_ch1);
+
+      //Send data to Dash7
+      STM32ToDash7Message msg;
+      msg.startDelimiter = START_DELIMITER;
+      msg.xCoord = curX;
+      msg.yCoord = curY;
+      msg.angle = curAngle;
+      msg.light = light_ch0;
+      msg.ir = light_ch1;
+      msg.temperature = raw_temp;
+      msg.humidity = raw_humidity;
+      msg.uid = UID;
+      msg.battery = 100;
+      msg.endDelimiter = END_DELIMITER;
+
+      // Send the message to the Dash7 task
+      HAL_UART_Transmit(&huart2, (uint8_t*) &msg, sizeof(msg), HAL_MAX_DELAY);
+      vTaskDelay(50);
+      shouldStop = 1;
+    }
+  }
+  /* USER CODE END StartSensingTask */
 }
 
 /**

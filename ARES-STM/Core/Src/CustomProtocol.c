@@ -23,7 +23,7 @@ void sendMessage(SensorType sensorType, uint32_t timestamp, uint16_t sensorData)
     message.sensorData = sensorData;
     message.checksum = START_DELIMITER + sensorType + (timestamp & 0xFF) + ((timestamp >> 8) & 0xFF) + ((timestamp >> 16) & 0xFF) + ((timestamp >> 24) & 0xFF) + (sensorData & 0xFF) + ((sensorData >> 8) & 0xFF);
     message.endDelimiter = END_DELIMITER;
-    HAL_UART_Transmit(&huart2, (uint8_t*)&message, CUSTOM_MESSAGE_SIZE, HAL_MAX_DELAY);
+    // HAL_UART_Transmit(&huart2, (uint8_t*)&message, CUSTOM_MESSAGE_SIZE, HAL_MAX_DELAY);
 }
 
  void sendLightSensorData(uint16_t sensorData) {

@@ -58,10 +58,9 @@
 #define SENSOR_FILE_SIZE         3
 #define SENSOR_INTERVAL_SEC	TIMER_TICKS_PER_SEC * 2
 
-#define UART_PORT_IDX           0       // Adjust based on your hardware setup
-#define UART_BAUDRATE           115200  // Adjust based on your requirements
-#define UART_PINS               0       // Adjust based on your hardware setup
-#define DATA_BUFFER_SIZE        sizeof(STM32ToDash7Message)      // Adjust based on expected data size
+#define UART1_PORT_IDX           0       // Adjust based on your hardware setup
+#define UART1_BAUDRATE           115200  // Adjust based on your requirements
+#define UART1_PINS               0       // Adjust based on your hardware setup
 
 #define SENSOR_FILE_TEMPERATURE_OFFSET 0
 #define SENSOR_FILE_LED_OFFSET 2
@@ -70,6 +69,7 @@
   static i2c_handle_t* hts221_handle;
 #endif
 
+uart_handle_t* uart1_handle;
 // this example pushes the temperature in a file together with the led status. The led status can be modified by sending a (dormant session) write file to the device claiming the led is on.
 
 // Define the D7 interface configuration used for sending the ALP command on
@@ -94,12 +94,11 @@ static alp_interface_config_d7ap_t itf_config = (alp_interface_config_d7ap_t){
 };
 
 static uint8_t led_status = 0;
-uart_handle_t* uart_handle;
 
 void execute_sensor_measurement()
 {
-  uart_send_string(uart_handle, "executing sensor measurement\r\n");
   log_print_string("executing sensor measurement");
+  uart_send_string(uart1_handle, "executing sensor measurement\r\n");
   // first get the sensor reading ...
   int16_t temperature = 0; // in decicelsius. When there is no sensor, we just transmit 0 degrees
   uint8_t data[3];
@@ -158,13 +157,10 @@ void on_alp_command_result_cb(alp_command_t *alp_command, alp_interface_status_t
 
 static void file_modified_callback(uint8_t file_id)
 {
-    uart_send_string(uart_handle, "file modified\r\n");
     log_print_string("file modified callback");
+    uart_send_string(uart1_handle, "file modified callback\r\n");
     uint32_t length = 1;
     d7ap_fs_read_file(SENSOR_FILE_ID, SENSOR_FILE_LED_OFFSET, &led_status, &length, ROOT_AUTH);
-    uart_send_string(uart_handle, "led status: ");
-    uart_send_byte(uart_handle, led_status);
-    uart_send_string(uart_handle, "\r\n");
     if(led_status) {
         led_on(0);
         led_on(1);
@@ -208,19 +204,8 @@ void bootstrap()
     // activate low power listening
     d7ap_fs_write_dll_conf_active_access_class(0x11);
 
-    uart_handle = uart_init(UART_PORT_IDX, UART_BAUDRATE, UART_PINS);
-    if(uart_handle == NULL) {
-        // Initialization failed, handle the error
-    }
-
-    bool enabled = uart_enable(uart_handle);
-    if(!enabled) {
-        // Enabling UART failed, handle the error
-    }
-
-    // Send a startup message over UART
-    uart_send_string(uart_handle, "UART Initialized Successfully\r\n");
-
+    uart1_handle = uart_init(UART1_PORT_IDX, UART1_BAUDRATE, UART1_PINS);
+    uart_send_string(uart1_handle, "UART1 Initialized Successfully\r\n");
 
 #if defined USE_HTS221
     hts221_handle = i2c_init(0, 0, 100000, true);

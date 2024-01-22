@@ -24,6 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32l4xx_hal.h"
 
 /* USER CODE END Includes */
 
@@ -44,13 +45,32 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+extern uint8_t shouldStop;
 
+extern UART_HandleTypeDef huart2;
 /* USER CODE END Variables */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 
 /* USER CODE END FunctionPrototypes */
+
+/* USER CODE BEGIN PREPOSTSLEEP */
+__weak void PreSleepProcessing(uint32_t ulExpectedIdleTime)
+{
+/* place for user code */
+	if (shouldStop) {
+		shouldStop=0;
+		HAL_PWREx_EnterSTOP2Mode(PWR_STOPENTRY_WFI); ///< Enters sleep mode here
+	}
+}
+
+__weak void PostSleepProcessing(uint32_t ulExpectedIdleTime)
+{
+/* place for user code */
+//	shouldStop=0;
+}
+/* USER CODE END PREPOSTSLEEP */
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */

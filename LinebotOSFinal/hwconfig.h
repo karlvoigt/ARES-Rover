@@ -20,11 +20,12 @@
 	#define ENCODER_RIGHT_INVERT 0
 	#define ENCODER_LEFT_INVERT 0
 	#define MOTOR_RIGHT_INVERT 1
-	#define MOTOR_LEFT_INVERT 0				
-	#define WHEEL_CIRC 207.3					//Wheel circumference (mm)
-	#define WHEEL_DISTANCE 111					//Distance between the wheels (mm)
-	#define DEG_PER_CNT 3						//Number of degrees per encoder count
-	//#define ENCODER_FILTER_ENABLE				//Define if encoder inputs should be filtered in SW
+	#define MOTOR_LEFT_INVERT 0	
+	#define WHEEL_DIAM 69.5						//Wheel diametre (mm)			
+	#define WHEEL_CIRC 218.340689				//Wheel circumference (mm)
+	#define WHEEL_DISTANCE 104					//Distance between the wheels (mm)
+	#define DEG_PER_CNT 3.01						//Number of degrees per encoder count
+	#define ENCODER_FILTER_ENABLE				//Define if encoder inputs should be filtered in SW
 	#define ENCODER_FILTER_TIME	32000			//Minimum number of CPU ticks between encoder line edges
 	#define MOTPOS_KP 300						//Motor angular position controller: KP
 	#define MOTPOS_FF_OFFSET 1500				//Motor drive signal: output offset (signal level when motor shaft starts to rotate)

@@ -59,8 +59,9 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
     uint8_t startDelimiter;
-    uint16_t dataLength;
-    MEMS_Data* data; // Pointer to an array of MEMS_Data
+    float xCoord;
+    float yCoord;
+    float yaw;
     uint8_t endDelimiter;
 } LineBotToSTM32Message;
 
@@ -73,7 +74,7 @@ typedef struct __attribute__((packed)) {
     uint16_t humidity;
     uint16_t light;
     uint16_t ir;
-    uint32_t timestamp;
+    uint32_t uid;
     uint8_t battery;
     uint8_t endDelimiter;
 } STM32ToDash7Message;
@@ -95,12 +96,18 @@ typedef enum {
 
 typedef struct __attribute__((packed)) {
     uint8_t startDelimiter;
-    MessageType messageType;
-    uint8_t payloadLength;
-    uint16_t payload; // Variable length, as defined by payload
+    float xCoord;
+    float yCoord;
+    float angle; // In degrees
+    uint16_t temperature; // Variable length, as defined by sensors
+    uint16_t humidity;
+    uint16_t light;
+    uint16_t ir;
+    uint32_t uid;
+    uint8_t battery;
     uint8_t endDelimiter;
 } BLERoverMessage;
-
+//size 27
 
 typedef union {
     STM32ToLineBotMessage stmToLb;

@@ -9,10 +9,12 @@
 #include "semphr.h"
 #include "task.h"
 #include "AresTask.h"
+#include "Globals.h"
 
 
 #include "CustomProtocol.h"
 #include "DriverDbgUSART.h"
+#include "PowerManagement.h"
 
 static int stdio_putchar(char c, FILE * stream);
 static int stdio_getchar(FILE *stream);
@@ -80,6 +82,10 @@ ISR(USART_TXC_vect)
 	{
 		USART.DATA=c;	
 	}
+	//if (shouldSleep) {
+		//shouldSleep = 0;
+		//enterSleepMode();
+	//}
 	
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
@@ -97,8 +103,6 @@ ISR(USART_RXC_vect)
 			receiveStarted=0;
 			USART_RX_transmission_complete = 1;
 			USART_RX_Count++;
-			DbgPrint("USART_RX_Count increased\n");
-			// vTaskNotifyGiveFromISR(AresTaskHandle,&xHigherPriorityTaskWoken);
 		} else {
 			xQueueSendToBackFromISR(UsartRxQueue,&c,&xHigherPriorityTaskWoken);
 		}

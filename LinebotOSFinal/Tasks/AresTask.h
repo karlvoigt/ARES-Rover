@@ -15,5 +15,6 @@ TaskHandle_t USARTCheckTaskHandle;
 void WorkerAres(void *pvParameters);
 void WorkerUSARTCheck(void *pvParameters);
 void InitAresTask(void);
+void loadTestInstructions(void);
 
 #endif // ARESTASK_H

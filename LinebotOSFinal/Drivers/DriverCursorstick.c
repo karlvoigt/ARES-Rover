@@ -6,6 +6,7 @@
 
 #include <avr/interrupt.h>
 #include <stdio.h>
+#include <avr/sleep.h>
 
 static QueueHandle_t CursorstickQueue;
 
@@ -47,23 +48,24 @@ uint8_t DriverCursorStickGetFifo(TickType_t BlockTime)
 
 ISR (PORTB_INT0_vect)
 {
-	printf("wakey wakey");
 	//DriverPowerVccAuxSet(1);
-	PMIC.CTRL |= 0b111;
-	static uint32_t LastIntTime=0;
-	uint32_t CurTime;
-	uint8_t ButtonState;
+	PMIC.CTRL |= 0b00000111;
+	//static uint32_t LastIntTime=0;
+	//uint32_t CurTime;
+	//uint8_t ButtonState;
 	BaseType_t xHigherPriorityTaskWoken=pdFALSE;
-	
-	CurTime=portGET_RUN_TIME_COUNTER_VALUE();
-	ButtonState=DriverCursorstickGet();
-	
-	if ((CurTime-LastIntTime)>CURSOR_MIN_INTERVAL) //debounce
-		if (ButtonState>0) 
-		{
-			xQueueSendToBackFromISR(CursorstickQueue,&ButtonState,&xHigherPriorityTaskWoken);
-			LastIntTime=CurTime;
-		}
-		
+	//
+	//CurTime=portGET_RUN_TIME_COUNTER_VALUE();
+	//ButtonState=DriverCursorstickGet();
+	//
+	//if ((CurTime-LastIntTime)>CURSOR_MIN_INTERVAL) //debounce
+		//if (ButtonState>0) 
+		//{
+			//xQueueSendToBackFromISR(CursorstickQueue,&ButtonState,&xHigherPriorityTaskWoken);
+			//LastIntTime=CurTime;
+		//}
+		//
+		//printf("wakey wakey");
+		sleep_disable();
 	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

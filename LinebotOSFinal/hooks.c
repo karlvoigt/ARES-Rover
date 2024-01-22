@@ -16,7 +16,6 @@
 
 void vApplicationIdleHook( void )
 {
-	
 }
 
 void vApplicationMallocFailedHook(void)

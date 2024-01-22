@@ -5,7 +5,7 @@
 #include "queue.h"
 
 #include "NavigationTask.h"
-#include "EncoderPositioning.h"
+#include "MotionCommands.h"
 #include "CustomProtocol.h"
 #include <math.h>
 

@@ -57,6 +57,14 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LinebotIntPin_Pin GPIO_PIN_4
+#define LinebotIntPin_GPIO_Port GPIOA
+#define LinebotIntPin_EXTI_IRQn EXTI4_IRQn
+#define Dash7IntPin_Pin GPIO_PIN_5
+#define Dash7IntPin_GPIO_Port GPIOA
+#define Dash7IntPin_EXTI_IRQn EXTI9_5_IRQn
+#define LinebotTrigger_Pin GPIO_PIN_0
+#define LinebotTrigger_GPIO_Port GPIOB
 #define SWDIO_Pin GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin GPIO_PIN_14

@@ -13,7 +13,6 @@
 #define CMD_DRIVE_SEGMENT 2
 #define CMD_ROTATE_CENTER 3
 
-#define MM_TO_CNT(x) (x/WHEEL_CIRC*360/DEG_PER_CNT)
 
 typedef struct 
 {
@@ -23,5 +22,9 @@ typedef struct
 void doDriveStraight(float Distance, float Speed);
 void doDriveSegment(float Speed);
 void doRotateCenter(float Angle, float Speed);
+void resetEncoderPositioning(void);
+float getEncoderXCoord(void);
+float getEncoderYCoord(void);
+float getEncoderYaw(void);
 
 #endif // MOTIONCOMMANDS_H

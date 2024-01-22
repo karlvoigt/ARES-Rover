@@ -73,7 +73,7 @@ typedef struct __attribute__((packed)) {
     uint16_t humidity;
     uint16_t light;
     uint16_t ir;
-    uint32_t timestamp;
+    uint32_t uid;
     uint8_t battery;
     uint8_t endDelimiter;
 } STM32ToDash7Message;
@@ -94,9 +94,15 @@ typedef enum {
 
 typedef struct __attribute__((packed)) {
     uint8_t startDelimiter;
-    MessageType messageType;
-    uint8_t payloadLength;
-    uint16_t payload; // Variable length, as defined by payload
+    float xCoord;
+    float yCoord;
+    float angle; // In degrees
+    uint16_t temperature;
+    uint16_t humidity;
+    uint16_t light;
+    uint16_t ir;
+    uint32_t timestamp;
+    uint8_t battery;
     uint8_t endDelimiter;
 } BLERoverMessage;
 

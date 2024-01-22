@@ -6,10 +6,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "EncoderPositioning.h"
+// #include "EncoderPositioning.h"
 #include "DriverDbgUSART.h"
 #include "PowerManagement.h"
 #include "DriverOled.h"
+#include "hwconfig.h"
 
 #include "MotionCommands.h"
 
@@ -27,29 +28,25 @@ void WorkerNavigation(void *pvParameters)
       // }
 			switch (instruction.instructionType) {
 				case RIGHT:
-							doRotateCenter(90, 100);
+							doRotateCenter(90, 200);
               inMotion = 1;
-              ResumeEncoderPositioning();
-							doDriveStraight(instruction.instructionValue, 100);
+							doDriveStraight(instruction.instructionValue, 255);
               inMotion = 0;
 							break;
 				case LEFT:
-							doRotateCenter(-90, 100);
+							doRotateCenter(-90, 200);
               inMotion = 1;
-              ResumeEncoderPositioning();
-							doDriveStraight(instruction.instructionValue, 100);
+							doDriveStraight(instruction.instructionValue, 255);
               inMotion = 0;
 							break;
 				case FORWARD:
               inMotion = 1;
-              ResumeEncoderPositioning();
-							doDriveStraight(instruction.instructionValue, 100);
+							doDriveStraight(instruction.instructionValue, 255);
               inMotion = 0;
 							break;
 				case BACKWARD:
               inMotion = 1;
-              ResumeEncoderPositioning();
-							doDriveStraight(-instruction.instructionValue, 100);
+							doDriveStraight(-instruction.instructionValue, 255);
               inMotion = 0;
 							break;
 				case CLOCKWISE:
@@ -63,10 +60,40 @@ void WorkerNavigation(void *pvParameters)
 				case STOP:
 						  //Stop encoder positioning task
 						  inMotion = 0;
-						  resetEncoderPosition();
-
 						  //Send data to STM32
-						  transmitDataToSTM();
+						  transferToSTM();
+							// Circular angle accuracy test
+							//navigationInstruction testInstructions[] = {
+								//{COUNTERCLOCKWISE,90},
+								//{COUNTERCLOCKWISE,90},
+								//{COUNTERCLOCKWISE,90},
+								//{COUNTERCLOCKWISE,90},
+								//{COUNTERCLOCKWISE,90},
+								//{COUNTERCLOCKWISE,90},
+								//{COUNTERCLOCKWISE,90},
+								//{COUNTERCLOCKWISE,90},
+								//{STOP, 0}
+							//};
+							//Triangle accuracy test
+							// navigationInstruction testInstructions[] = {
+							// 	{FORWARD, 1000},
+							// 	{COUNTERCLOCKWISE, 90},
+							// 	{FORWARD, 500},
+							// 	{COUNTERCLOCKWISE, 135},
+							// 	{FORWARD, 1118.033989},
+							// 	{COUNTERCLOCKWISE, 135},
+							// 	{STOP, 0}
+							// };
+
+							// // Get the number of instructions
+							// int numInstructions = sizeof(testInstructions) / sizeof(navigationInstruction);
+							// printf("NumInstructions: %d\n", numInstructions);
+							// // Enqueue the instructions
+							// for (int i = 0; i < numInstructions; i++) {
+							// 	// Enqueue the instruction into the InstructionQueue
+							// 	// Replace "InstructionQueue" with the actual name of your queue
+							// 	xQueueSend(InstructionQueue, &testInstructions[i], 0);
+							// }
 							break;
 				case MEASURE:
 							break;
@@ -76,7 +103,8 @@ void WorkerNavigation(void *pvParameters)
 							break;
 			}
 		} else {
-			vTaskSuspend(NULL);
+			//vTaskSuspend(NULL);
+			vTaskDelay(1000);
 		}
 	}
 }
@@ -85,15 +113,17 @@ void WorkerNavigation(void *pvParameters)
 void transferToSTM() {
 	//Wake up the Stm32 with an interrupt on pin
 	stmInterruptClear();
-	vTaskDelay(100);
-	transmitDataToSTM();
+	vTaskDelay(10);
 	stmInterruptSet();
+	transmitDataToSTM();
 }
 
 //Function to transmit Acc and Gyro data to the STM32
 void transmitDataToSTM() {
 	//Send data to STM32
   LineBotToSTM32Message message;
+
+
 
   message.startDelimiter = START_DELIMITER;
   message.xCoord = getEncoderXCoord();
@@ -102,6 +132,8 @@ void transmitDataToSTM() {
   message.endDelimiter = END_DELIMITER;
 
   transmitPositionData(&message);
+	vTaskDelay(100);
+	enterSleepMode();
 }
 
 //Function to print MEMS data
@@ -121,12 +153,13 @@ void transmitMEMSData(MEMS_Data* data) {
 
 //Function to transmit position data over UART
 void transmitPositionData(LineBotToSTM32Message* message) {
-    fwrite(&message, sizeof(LineBotToSTM32Message), 1, stdout);
-    //tcdrain(fileno(stdout)); // Wait until all output written to stdout has been transmitted
-    // Call your device's specific sleep function here
-     fflush(stdout);
-     vTaskDelay(50/portTICK_PERIOD_MS);
-    enterSleepMode();
+
+    char* rawBytes = (char*)message;
+    for(int i = 0; i < sizeof(LineBotToSTM32Message); i++) {
+        putchar(rawBytes[i]);
+    }
+    //printf("Sleeping/n");
+	//printf("Continuing/n");
 }
 
 // Function to print the instructions
@@ -160,47 +193,6 @@ void printInstructions(navigationInstruction* instructions, uint16_t numInstruct
         break;
     }
   }
-}
-
-//Function to print instructions to the OLED screen
-void printOLEDInstructions(navigationInstruction* instructions, uint16_t numInstructions) {
-    char buffer[50];
-    DriverOLEDClearScreen(); // Clear the screen once before the loop
-
-    for (uint16_t i = 0; i < numInstructions; i++) {
-        sprintf(buffer, "Instruction %d: ", i); // Print the instruction number
-        DriverOLEDPrintSmText(i, buffer, 0);
-
-        switch (instructions[i].instructionType) {
-            case LEFT:
-                sprintf(buffer, "Turn left and drive %f mm", instructions[i].instructionValue);
-                break;
-            case RIGHT:
-                sprintf(buffer, "Turn right and drive %f mm", instructions[i].instructionValue);
-                break;
-            case FORWARD:
-                sprintf(buffer, "Drive %f mm forwards", instructions[i].instructionValue);
-                break;
-            case BACKWARD:
-                sprintf(buffer, "Drive %f mm backwards", instructions[i].instructionValue);
-                break;
-            case CLOCKWISE:
-                sprintf(buffer, "Turn clockwise %f degrees", instructions[i].instructionValue);
-                break;
-            case COUNTERCLOCKWISE:
-                sprintf(buffer, "Turn counterclockwise %f degrees", instructions[i].instructionValue);
-                break;
-            case STOP:
-                sprintf(buffer, "Stop");
-                break;
-            default:
-                sprintf(buffer, "Unknown instruction type");
-                break;
-        }
-        DriverOLEDPrintSmText(i+1, buffer, 0); // Print the instruction details
-    }
-
-    DriverOLEDUpdate(); // Update the screen once after the loop
 }
 
 void stmInterruptPinInit(void)

@@ -8,18 +8,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "DriverDbgUSART.h"
+#include "DriverUSART.h"
 #include "PowerManagement.h"
 
 #include "NavigationTask.h"
 #include "ReturnHomeTask.h"
+#include "GyroTask.h"
 
 //Private variables
 uint8_t test;
+extern QueueHandle_t UsartRxQueue;
+#define VERBOSE 0
 
 //Function definitions
 void InitAresTask()
 {
-  InstructionQueue = xQueueCreate(5, sizeof(navigationInstruction));
+  InstructionQueue = xQueueCreate(15, sizeof(navigationInstruction));
 
   USART_RX_Count = 0;
   
@@ -28,7 +32,7 @@ void InitAresTask()
   //Create task to periodically check if the USART RX Queue has data
   xTaskCreate(WorkerUSARTCheck, "USARTCheck", 512, NULL, tskIDLE_PRIORITY+1, &USARTCheckTaskHandle);
 
-  printf("Ares related tasks initiated\n");
+  if (VERBOSE) printf("Ares related tasks initiated\n");
 }
 
 void WorkerAres(void *pvParameters)
@@ -39,27 +43,29 @@ void WorkerAres(void *pvParameters)
   stmInterruptSet();
 	while(1)
 	{
+		//Just read out yaw for debugging
+		// float yaw, yawRate;
+		// GyroGet(&yawRate, &yaw);
+		// printf("Yaw: %f\n", yaw);
+		// printf("YawRate: %f\n", yawRate);
+		// vTaskDelay(500);
 		uint32_t ulNotificationValue;
 		if (USART_RX_Count == 0) {
 			  vTaskSuspend(NULL);
 		}
 		if (USART_RX_Count>0) {
 			//Debug print
-			printf("Processing instructions \n");
 			USART_RX_Count -= 1;
 			// Step 1: Read the first byte to get the instruction count
-			instructionCount = fgetc(stdin);
+			xQueueReceive(UsartRxQueue,&instructionCount,portMAX_DELAY);
 			// Step 2: Calculate the total message length
 			totalLength = instructionCount * sizeof(navigationInstruction);
+      // printf("Instruction count: %d\n", instructionCount);
 			uint8_t msg[totalLength]; // Create a buffer to store the message
-			if (msg == NULL) {
-				// Handle memory allocation failure
-				printf("Malloc error\n");
-			}
 			// Step 3: Read the rest of the message
-			for (uint16_t i = 0; i < totalLength-1; i++) {
-				msg[i] = fgetc(stdin);
-			  }
+			for (uint16_t i = 0; i < totalLength; i++) {
+				xQueueReceive(UsartRxQueue,msg+i,portMAX_DELAY);
+      }
 	  
       //Delay for debug printing, remove during production
       //TODO: Remove this delay
@@ -73,11 +79,42 @@ void WorkerAres(void *pvParameters)
 				xQueueSendToBack(InstructionQueue, &instructions[i], 0);	
 			} 
 			// Print the instructions
-			printInstructions(instructions, instructionCount);
+			// printInstructions(instructions, instructionCount);
 			//Start the navigation task
 			vTaskResume(NavigationTaskHandle);
 		}
 	}
+}
+
+void loadTestInstructions() {
+    // Define the test instructions
+    navigationInstruction testInstructions[] = {
+        {FORWARD, 1000},
+        {COUNTERCLOCKWISE, 90},
+        {FORWARD, 500},
+        {COUNTERCLOCKWISE, 45},
+        {COUNTERCLOCKWISE, 90},
+        {FORWARD, 1118.033989},
+		{COUNTERCLOCKWISE, 45},
+		{COUNTERCLOCKWISE, 90},
+        {STOP, 0}
+    };
+
+    // Get the number of instructions
+    int numInstructions = sizeof(testInstructions) / sizeof(navigationInstruction);
+	if (VERBOSE) ("NumInstructions: %d\n", numInstructions);
+    // Enqueue the instructions
+    for (int i = 0; i < numInstructions; i++) {
+        // Enqueue the instruction into the InstructionQueue
+        // Replace "InstructionQueue" with the actual name of your queue
+        xQueueSend(InstructionQueue, &testInstructions[i], 0);
+    }
+	
+	// Print the instructions
+	if (VERBOSE) printInstructions(testInstructions, numInstructions);
+    // Resume the navigation task
+    // Replace "NavigationTaskHandle" with the actual handle of your navigation task
+    vTaskResume(NavigationTaskHandle);
 }
 
 // void WorkerNavigation(void *pvParameters)

@@ -42,6 +42,8 @@
 
 #include "platform.h"
 
+// #define USE_HTS221 1
+
 #ifdef USE_HTS221
   #include "HTS221_Driver.h"
   #include "hwi2c.h"
